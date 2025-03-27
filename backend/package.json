@@ -1,16 +1,18 @@
 {
   "name": "peche-backend",
   "version": "1.0.0",
+  "type": "module",
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
-    "pg": "^8.7.3",
+    "express": "^4.18.2",
+    "mysql2": "^3.2.4",
+    "pg": "^8.14.1",
     "sequelize": "^6.28.0"
   },
   "devDependencies": {
