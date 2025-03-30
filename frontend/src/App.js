@@ -2,6 +2,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar"; // Importation du menu
 import Login from "./pages/Login";
+import Signin from "./pages/signin";
 import Catches from "./pages/Catches";
 import Ranking from "./pages/Ranking";
 import Admin from "./pages/Admin";
@@ -12,7 +13,9 @@ function App() {
     <Router>
       <Navbar /> {/* Affichage du menu de navigation */}
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={<Signin />} />
+        <Route path="/signin" element={<Signin />} />
+        <Route path="/Login" element={<Login />} />
         <Route path="/catches" element={<Catches />} />
         <Route path="/ranking" element={<Ranking />} />
         <Route path="/admin" element={<Admin />} />
@@ -23,4 +26,5 @@ function App() {
 }
 
 export default App;
+
 

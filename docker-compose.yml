@@ -25,13 +25,14 @@ services:
     image: postgres:15
     restart: always
     environment:
-      POSTGRES_DB: peche_db
-      POSTGRES_USER: peche_user
-      POSTGRES_PASSWORD: peche_pass
+      POSTGRES_DB: atlasbassmaster
+      POSTGRES_USER: atlasbassmaster
+      POSTGRES_PASSWORD: atlasbassmaster
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
 
 volumes:
   postgres_data:
