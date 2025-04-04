@@ -6,7 +6,8 @@ RUN npm install
 
 COPY . .
 
-# Appliquer les permissions sur tout le projet
-RUN chmod -R 755 /app
+# Ajoute le script wait-for-db
+COPY wait-for-db.sh .
+RUN chmod +x wait-for-db.sh
 
-CMD ["node", "src/app.js"]
+CMD ["./wait-for-db.sh", "node", "src/app.js"]

@@ -24,7 +24,7 @@ app.get("/", (req, res) => {
   res.send("🚀 API en cours d'exécution !");
 });
 
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, async () => {
   await connectDB();
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);

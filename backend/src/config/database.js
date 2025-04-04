@@ -10,8 +10,7 @@ export const sequelize = new Sequelize(process.env.DB_NAME,
                                              port: process.env.DB_PORT,
                                              dialect: "postgres",
                                              logging: false, // Désactive les logs SQL
-  dialect: "postgres",
-  logging: false,
+  
 });
 
 export const connectDB = async () => {
