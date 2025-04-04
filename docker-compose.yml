@@ -11,15 +11,19 @@ services:
       - ./backend/.env
     depends_on:
       - db
+    restart: on-failure
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
     depends_on:
       - backend
+    
 
   db:
     image: postgres:15
