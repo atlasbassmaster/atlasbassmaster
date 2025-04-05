@@ -1,43 +1,39 @@
-import { useState, useEffect } from "react";
-import axios from "../services/api";
+import React, { useState } from 'react';
+import api from '../services/api';
 
-const Catches = () => {
-  const [catches, setCatches] = useState([]);
-  const [fishLength, setFishLength] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+export default function Catches() {
+  const [length, setLength] = useState('');
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    axios.get("/catches/my-catches")
-      .then(response => setCatches(response.data.catches))
-      .catch(error => console.error("Erreur :", error));
-  }, []);
-
-  const handleAddCatch = () => {
-    const length = parseFloat(fishLength);
-    if (length < 30) {
-      setErrorMessage("❌ Longueur minimale : 30 cm");
-      return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      await api.post('/catches', { length: parseFloat(length) });
+      setLength('');
+      setError('');
+      alert('Prise enregistrée avec succès !');
+    } catch (err) {
+      setError(err.response?.data?.error || "Erreur lors de l'enregistrement");
     }
-
-    axios.post("/catches", { length })
-      .then(response => {
-        setCatches(response.data.catches);
-        setErrorMessage("");
-        setFishLength("");
-      })
-      .catch(error => console.error("Erreur :", error));
   };
 
   return (
-    <div>
-      <h2>Enregistrement des Prises</h2>
-      <input type="number" placeholder="Longueur (cm)" value={fishLength} onChange={(e) => setFishLength(e.target.value)} />
-      <button onClick={handleAddCatch} disabled={catches.length >= 5}>Ajouter</button>
-      {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
-      <h3>Vos Prises ({catches.length}/5)</h3>
-      <ul>{catches.map((fish, i) => <li key={i}>🐟 {fish.length} cm</li>)}</ul>
+    <div className="catches-form">
+      <h2>Enregistrer une prise</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="number"
+          value={length}
+          onChange={(e) => setLength(e.target.value)}
+          placeholder="Longueur (cm)"
+          min="30"
+          step="0.1"
+          required
+        />
+        <button type="submit">Valider</button>
+        {error && <p className="error">{error}</p>}
+      </form>
     </div>
   );
-};
-
-export default Catches;
+}

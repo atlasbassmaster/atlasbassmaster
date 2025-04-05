@@ -1,0 +1,20 @@
+/* Ajoutez ces règles supplémentaires */
+.switch-mode-btn {
+    background: none;
+    border: none;
+    color: #3498db;
+    cursor: pointer;
+    margin-top: 1rem;
+    text-decoration: underline;
+    font-size: 0.9rem;
+  }
+  
+  .switch-mode-btn:hover {
+    color: #2980b9;
+  }
+  
+  /* Adaptez le container pour les deux modes */
+  .home-container {
+    max-width: 500px;
+    /* ... autres règles existantes ... */
+  }
