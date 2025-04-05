@@ -2,140 +2,175 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../services/api";
 
-
 const Signin = () => {
+  const [isLoginMode, setIsLoginMode] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
-  const [toise, setToise] = useState(""); // Nouveau champ Numéro de toise
-  const [code, setCode] = useState(""); // Nouveau champ Numéro de toise
+  const [toise, setToise] = useState("");
+  const [code, setCode] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
 
-  const validateLetters = (value) => {
-    return /^[A-Za-z]+$/.test(value);
+  const validateLetters = (value) => /^[A-Za-z]+$/.test(value);
+  const validateNumbers = (value) => /^[0-9]*$/.test(value);
+
+  const validatetToise = (value) =>
+    value.length === 0 || (/^[0-9]*$/.test(value) && value > 0 && value < 151);
+
+  const validatePhoneNumber = (value) => {
+    const cleanedValue = value;
+    if (cleanedValue.length > 10) return false;
+    return (
+      cleanedValue.length <= 10 &&
+      ((cleanedValue.length === 1 && cleanedValue.startsWith("0")) ||
+        cleanedValue.startsWith("06") ||
+        cleanedValue.startsWith("07"))
+    );
   };
 
-  // Function to validate only numbers for other fields
-  const validateNumbers = (value) => {
-    return /^[0-9]*$/.test(value);
-  };
-
-    const validatetToise = (value) => {
-      return value.length == 0  |  (/^[0-9]*$/.test(value) &&  (value > 0 && (value < 151))); };
-
-
-    const validatePhoneNumber = (value) => {
-      const cleanedValue = value;
-      if (cleanedValue.length > 10) return false; // Limit length to 10 digits max
-
-      // Check if it starts with "06" or "07"
-      return cleanedValue.length <= 10 && (( cleanedValue.length == 1 && cleanedValue.startsWith("0") )|| cleanedValue.startsWith("06") || cleanedValue.startsWith("07"));
-    };
-  const handleLogin = async (e) => {
-
+  const handleSignup = async (e) => {
     e.preventDefault();
-    setErrorMessage(""); // Reset error message before a new request
+    setErrorMessage("");
+
     try {
       const response = await axios.post("/signin", {
-        first_name: firstName,  // Rename to match backend
+        first_name: firstName,
         last_name: lastName,
         phone_number: phone,
         toise_id: toise,
         code: code,
-    });
+      });
+
       if (response.data.success) {
         navigate("/catches");
       } else {
-        setErrorMessage("Échec de connexion. Vérifiez vos informations.");
+        setErrorMessage("Échec de l'inscription. Vérifiez vos informations.");
       }
     } catch (error) {
-     if (error.response) {
-           // Server responded with an error status
-           setErrorMessage(error.response.data.message || "Erreur lors de la connexion.");
-         } else if (error.request) {
-           // Request was made but no response received
-           setErrorMessage("Impossible de contacter le serveur. Vérifiez votre connexion.");
-         } else {
-           // Other errors
-           setErrorMessage("Une erreur inconnue est survenue.");
-         }
-         console.error("Erreur de connexion :", error);
+      handleRequestError(error);
     }
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setErrorMessage("");
+
+    try {
+      const response = await axios.post("/auth/login", {
+        toise,
+        code,
+      });
+
+      if (response.data.success) {
+        navigate("/catches");
+      } else {
+        setErrorMessage("Connexion échouée. Vérifiez vos informations.");
+      }
+    } catch (error) {
+      handleRequestError(error);
+    }
+  };
+
+  const handleRequestError = (error) => {
+    if (error.response) {
+      setErrorMessage(error.response.data.message || "Erreur côté serveur.");
+    } else if (error.request) {
+      setErrorMessage("Aucune réponse du serveur.");
+    } else {
+      setErrorMessage("Une erreur inconnue est survenue.");
+    }
+    console.error("Erreur de requête :", error);
   };
 
   return (
     <div style={styles.container}>
-      <div style={styles.overlay}></div> {/* Overlay pour améliorer la visibilité */}
+      <div style={styles.overlay}></div>
       <div style={styles.card}>
         <img src="/logo.png" alt="Logo" style={styles.logo} />
         <h2 style={styles.title}>Bienvenue sur Atlas Bass Master 🎣</h2>
-        <form onSubmit={handleLogin} style={styles.form}>
-          <input
-            type="text"
-            placeholder="Prénom"
-            value={firstName}
-             onChange={(e) => {
-                          if (validateLetters(e.target.value)) {
-                            setFirstName(e.target.value);
-                          }
-                        }}
-            required
-            style={styles.input}
-          />
-                    <input
-                      type="text"
-                      placeholder="Nom"
-                      value={lastName}
-                       onChange={(e) => {
-                                    if (validateLetters(e.target.value)) {
-                                      setLastName(e.target.value);
-                                    }
-                                  }}
-                      required
-                      style={styles.input}
-                    />
-          <input
-            type="text"
-            placeholder="Téléphone"
-            value={phone}
-            onChange={(e) => {
 
-              if (validatePhoneNumber(e.target.value) || e.target.value === "") {
-                setPhone(e.target.value);
+        {!isLoginMode ? (
+          <form onSubmit={handleSignup} style={styles.form}>
+            <input
+              type="text"
+              placeholder="Prénom"
+              value={firstName}
+              onChange={(e) => validateLetters(e.target.value) && setFirstName(e.target.value)}
+              required
+              style={styles.input}
+            />
+            <input
+              type="text"
+              placeholder="Nom"
+              value={lastName}
+              onChange={(e) => validateLetters(e.target.value) && setLastName(e.target.value)}
+              required
+              style={styles.input}
+            />
+            <input
+              type="text"
+              placeholder="Téléphone"
+              value={phone}
+              onChange={(e) =>
+                (validatePhoneNumber(e.target.value) || e.target.value === "") && setPhone(e.target.value)
               }
-            }}
-            required
-            style={styles.input}
-          />
-          <input
-            type="text"
-            placeholder="Numéro de toise"  // Nouveau champ ajouté ici
-            value={toise}
-                        onChange={(e) => {
-                          if (validatetToise(e.target.value)) {
-                            setToise(e.target.value);
-                          }
-                        }}
-            required
-            style={styles.input}
-          />
-                    <input
-                      type="text"
-                      placeholder="Code"  // Nouveau champ ajouté ici
-                      value={code}
-                      onChange={(e) => setCode(e.target.value)}
-                      required
-                      style={styles.input}
-                    />
-          <button type="submit" style={styles.button}>Se connecter</button>
-        </form>
-        {/* Display error message */}
+              required
+              style={styles.input}
+            />
+            <input
+              type="text"
+              placeholder="Numéro de toise"
+              value={toise}
+              onChange={(e) => validatetToise(e.target.value) && setToise(e.target.value)}
+              required
+              style={styles.input}
+            />
+            <input
+              type="text"
+              placeholder="Code"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              required
+              style={styles.input}
+            />
+            <button type="submit" style={styles.button}>S'inscrire</button>
+          </form>
+        ) : (
+          <form onSubmit={handleLogin} style={styles.form}>
+            <input
+              type="text"
+              placeholder="Numéro de toise"
+              value={toise}
+              onChange={(e) => validatetToise(e.target.value) && setToise(e.target.value)}
+              required
+              style={styles.input}
+            />
+            <input
+              type="text"
+              placeholder="Code"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              required
+              style={styles.input}
+            />
+            <button type="submit" style={styles.button}>Se connecter</button>
+          </form>
+        )}
+
+        <p
+          onClick={() => setIsLoginMode(!isLoginMode)}
+          style={{ marginTop: 16, color: "#007bff", cursor: "pointer", textDecoration: "underline" }}
+        >
+          {isLoginMode ? "Retour à l'inscription" : "J'ai déjà un compte"}
+        </p>
+
         {errorMessage && <p style={styles.error}>{errorMessage}</p>}
       </div>
     </div>
   );
 };
+ 
 
 const styles = {
   container: {
