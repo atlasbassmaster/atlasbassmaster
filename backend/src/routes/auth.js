@@ -1,52 +1,44 @@
 import express from 'express';
 import { Sequelize, Op } from 'sequelize';
 import User from '../models/User.js';
+import Staff from '../models/Staff.js';
+import Toise from '../models/Toise.js';
 
 const router = express.Router();
 
-// [POST] /auth/register
-router.post('/register', async (req, res) => {
-    const { fullName, phone, toiseNumber, secretCode } = req.body;
 
-    // Validation des données
-    if (!fullName || !phone || !toiseNumber || !secretCode) {
+
+// [POST] /auth/login
+router.post('/login', async (req, res) => {
+    const { toise_id, code } = req.body;
+
+    if (!toise_id || !code) {
         return res.status(400).json({ 
-            error: 'Tous les champs sont obligatoires' 
+            error: 'Toise et code requis' 
         });
     }
 
     try {
-        // Vérification des doublons
-        const existingUser = await User.findOne({
-            where: {
-                [Op.or]: [
-                    { phone },
-                    { toiseNumber }
-                ]
-            }
-        });
 
-        if (existingUser) {
-            return res.status(409).json({
-                error: existingUser.phone === phone 
-                    ? 'Ce numéro de téléphone est déjà utilisé'
-                    : 'Ce numéro de toise est déjà attribué'
+        console.log("Login ", toise_id, code);
+        let toise = await Toise.findOne({ where: { id:toise_id, code} });
+        if (!toise) {
+            return res.status(401).json({
+                error: 'Identifiants incorrects'
             });
         }
 
-        // Création de l'utilisateur
-        const user = await User.create({
-            fullName,
-            phone,
-            toiseNumber,
-            secretCode
-        });
+        let user = await User.findOne({ where: {toise_id} });
 
-        res.status(201).json({
-            id: user.id,
-            fullName: user.fullName,
-            toiseNumber: user.toiseNumber
-        });
+        if (!user) {
+            return res.status(401).json({ 
+                error: 'Compte introuvable'
+            });
+        }
+
+
+
+        res.json({ success: true, user });
 
     } catch (error) {
         console.error('Erreur:', error);
@@ -56,34 +48,38 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// [POST] /auth/login
-router.post('/login', async (req, res) => {
-    const { toiseNumber, secretCode } = req.body;
 
-    if (!toiseNumber || !secretCode) {
-        return res.status(400).json({ 
-            error: 'Toise et code requis' 
+
+
+// [POST] /auth/login
+router.post('/staff', async (req, res) => {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({
+            error: 'username et password requis'
         });
     }
 
     try {
-        const user = await User.findOne({
-            where: { toiseNumber, secretCode },
-            attributes: ['id', 'fullName', 'toiseNumber']
-        });
 
-        if (!user) {
-            return res.status(401).json({ 
-                error: 'Identifiants incorrects' 
+
+        let staff = await Staff.findOne({ where: {username, password } });
+
+        if (!staff) {
+            return res.status(401).json({
+                error: 'Compte introuvable'
             });
         }
 
-        res.json(user);
+
+
+        res.json({ success: true, staff });
 
     } catch (error) {
         console.error('Erreur:', error);
-        res.status(500).json({ 
-            error: 'Erreur serveur' 
+        res.status(500).json({
+            error: 'Erreur serveur'
         });
     }
 });

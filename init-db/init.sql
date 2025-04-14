@@ -15,5 +15,23 @@ CREATE TABLE users (
 );
 ALTER TABLE users ADD CONSTRAINT unique_toise UNIQUE (toise_id);
 
+CREATE TABLE catch (
+    id SERIAL PRIMARY KEY,
+    length FLOAT NOT NULL CHECK (length > 0), -- Ensures length is positive
+    user_id INTEGER NOT NULL,
+    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 insert into toise values (1, 'atlasbassmatser');
 insert into toise values (2, 'atlasbassmatser');
+
+
+CREATE TABLE staff (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+insert into staff values (1, 'alaaCH', 'alaa_1446');

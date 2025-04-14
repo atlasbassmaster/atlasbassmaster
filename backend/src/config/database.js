@@ -1,17 +1,23 @@
-import { Sequelize } from 'sequelize';
-import dotenv from 'dotenv';
+import { Sequelize } from "sequelize";
+import dotenv from "dotenv";
 
 dotenv.config();
 
-const sequelize = new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASSWORD,
-    {
-        host: process.env.DB_HOST,
-        dialect: 'mysql',
-        logging: false
-    }
-);
+// ✅ Create Sequelize instance
+export const sequelize = new Sequelize(process.env.DB_URL, {
+  dialect: "postgres",
+  logging: false, // Disable logging (set to `console.log` to see queries)
+});
 
-export default sequelize;
+// ✅ Function to check DB connection
+export const connectDB = async () => {
+  try {
+
+  console.log("✅ Database connected successfully.");
+    await sequelize.authenticate();
+    console.log("✅ Database connected successfully.");
+  } catch (error) {
+    console.error("❌ Database connection failed:", error);
+    throw error; // Rethrow the error to prevent server startup
+  }
+};

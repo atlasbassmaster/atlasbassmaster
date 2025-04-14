@@ -1,44 +1,49 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/database.js";
-import User from "./User.js";
+import User from "./User.js"; // Import User model
 
-const Catch = sequelize.define("Catch", {
-  id: { 
-    type: DataTypes.UUID, 
-    defaultValue: DataTypes.UUIDV4, 
-    primaryKey: true 
+const Catch = sequelize.define(
+  "Catch",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true, // Auto-increment primary key
+    },
+    length: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+      validate: {
+        min: 1, // Ensures length is positive
+      },
+    },
+    user_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+       field: "user_id",
+      references: {
+        model: User, // References the User table
+        key: "id",
+      },
+      onDelete: "CASCADE", // Deletes catches when the user is deleted
+    },
+    created_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW, // Auto-generate timestamp
+      field: "created_at",
+    },
   },
-  length: { 
-    type: DataTypes.FLOAT, 
-    allowNull: false,
-    validate: {
-      min: 30,       // 30cm minimum
-      max: 200,      // limite maximale réaliste
-      isFloat: true  // vérifie que c'est un nombre
-    }
-  },
-  points: { 
-    type: DataTypes.INTEGER, 
-    allowNull: false,
-    defaultValue: 0  // sera calculé automatiquement
-  },
-  userId: { 
-    type: DataTypes.UUID, 
-    allowNull: false, 
-    references: { 
-      model: User, 
-      key: "id" 
-    } 
-  },
-}, {
-  hooks: {
-    beforeValidate: (catchInstance) => {
-      // Calcule automatiquement les points
-      if (catchInstance.length >= 30) {
-        catchInstance.points = Math.floor(catchInstance.length * 10);
-      }
-    }
+  {
+    tableName: "catch", // Ensure table name is not pluralized
+    freezeTableName: true, // Prevent automatic pluralization
+    timestamps: false, // Enable timestamps (createdAt included)
+    updatedAt: false, // Disable updatedAt (optional)
   }
-});
+);
+
+
+// Establish Relationship
+User.hasMany(Catch, { foreignKey: "user_id" });
+Catch.belongsTo(User, { foreignKey: "user_id" });
 
 export default Catch;

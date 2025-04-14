@@ -1,10 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../services/api";
+import "../Styles/Catches.css";
+import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
+import 'react-tabs/style/react-tabs.css';
 
 const Signin = () => {
   const [isLoginMode, setIsLoginMode] = useState(false);
   const [firstName, setFirstName] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [toise, setToise] = useState("");
@@ -33,6 +38,9 @@ const Signin = () => {
     e.preventDefault();
     setErrorMessage("");
 
+
+
+
     try {
       const response = await axios.post("/signin", {
         first_name: firstName,
@@ -43,26 +51,33 @@ const Signin = () => {
       });
 
       if (response.data.success) {
+        sessionStorage.setItem("user__id", response.data.user.id);
         navigate("/catches");
       } else {
-        setErrorMessage("Échec de l'inscription. Vérifiez vos informations.");
+       console.log("UUUU");
+        setErrorMessage(response.data.message);
       }
     } catch (error) {
       handleRequestError(error);
     }
   };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+
+
+  const handleStaffLogin = async (e) => {
+  e.preventDefault();
     setErrorMessage("");
 
     try {
-      const response = await axios.post("/auth/login", {
-        toise,
-        code,
+      const response = await axios.post("/auth/staff", {
+        username,
+        password,
       });
 
       if (response.data.success) {
+      console.log(response.data);
+       // sessionStorage.setItem("staff__id", response.data.user.id);
+       // console.log(sessionStorage.getItem("user__id"));
         navigate("/catches");
       } else {
         setErrorMessage("Connexion échouée. Vérifiez vos informations.");
@@ -72,7 +87,32 @@ const Signin = () => {
     }
   };
 
+  const handleParticipantLogin = async (e) => {
+    e.preventDefault();
+    setErrorMessage("");
+
+    try {
+      const response = await axios.post("/auth/login", {
+        toise_id:toise,
+        code,
+      });
+
+      if (response.data.success) {
+        sessionStorage.setItem("user__id", response.data.user.id);
+        console.log("UUUU");
+        console.log(sessionStorage.getItem("user__id"));
+        navigate("/catches");
+      } else {
+      console.log("UUUU");
+        setErrorMessage("Connexion échouée. Vérifiez vos informations.");
+      }
+    } catch (error) {
+      handleRequestError(error);
+    }
+  };
+
   const handleRequestError = (error) => {
+    console.log(error);
     if (error.response) {
       setErrorMessage(error.response.data.message || "Erreur côté serveur.");
     } else if (error.request) {
@@ -137,25 +177,55 @@ const Signin = () => {
             <button type="submit" style={styles.button}>S'inscrire</button>
           </form>
         ) : (
-          <form onSubmit={handleLogin} style={styles.form}>
-            <input
-              type="text"
-              placeholder="Numéro de toise"
-              value={toise}
-              onChange={(e) => validatetToise(e.target.value) && setToise(e.target.value)}
-              required
-              style={styles.input}
-            />
-            <input
-              type="text"
-              placeholder="Code"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              required
-              style={styles.input}
-            />
-            <button type="submit" style={styles.button}>Se connecter</button>
-          </form>
+<Tabs>
+  <TabList>
+    <Tab>Participant</Tab>
+    <Tab>Staff</Tab>
+  </TabList>
+
+  <TabPanel>
+    {/* Participant Login Form */}
+    <form onSubmit={handleParticipantLogin}>
+      <input
+        type="text"
+        placeholder="Numéro de toise"
+        value={toise}
+        onChange={(e) => setToise(e.target.value)}
+        required
+      />
+      <input
+        type="text"
+        placeholder="Code"
+        value={code}
+        onChange={(e) => setCode(e.target.value)}
+        required
+      />
+      <button type="submit">Se connecter</button>
+    </form>
+  </TabPanel>
+
+  <TabPanel>
+    {/* Staff Login Form */}
+    <form onSubmit={handleStaffLogin}>
+      <input
+        type="text"
+        placeholder="Nom d'utilisateur"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        required
+      />
+      <input
+        type="password"
+        placeholder="Mot de passe"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+      />
+      <button type="submit">Se connecter</button>
+    </form>
+  </TabPanel>
+</Tabs>
+
         )}
 
         <p

@@ -6,15 +6,15 @@ const api = axios.create({
   withCredentials: true // si vous utilisez des cookies
 });
 
-// Intercepteur pour gérer les erreurs
-api.interceptors.response.use(
-  response => response,
-  error => {
-    if (error.response) {
-      return Promise.reject(error.response.data);
-    }
-    return Promise.reject(error);
-  }
-);
+//// Intercepteur pour gérer les erreurs
+//api.interceptors.response.use(
+//  response => response,
+//  error => {
+//    if (error.response) {
+//      return Promise.reject(error.response.data);
+//    }
+//    return Promise.reject(error);
+//  }
+//);
 
 export default api;

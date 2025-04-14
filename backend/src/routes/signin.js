@@ -5,6 +5,9 @@ import Toise from "../models/Toise.js";
 const router = express.Router();
 
 router.post("/", async (req, res) => {
+
+try {
+
   const { first_name, last_name, phone_number, toise_id, code } = req.body;
 
 
@@ -18,7 +21,8 @@ router.post("/", async (req, res) => {
      return res.status(400).json({ success: false, message: "Code invalide." });
   }
 
-  let user = await User.findOne({ where: { toise_id } });
+  let user = await User.findOne({ where: {toise_id } });
+
    if (user) {
       // If user exists, return an error response
       return res.status(400).json({ success: false, message: "Toise already taken." });
@@ -37,6 +41,11 @@ router.post("/", async (req, res) => {
   }
 
   res.json({ success: true, user });
+
+    } catch (err) {
+      console.error("Error occurred:", err);
+    }
+
 });
 
 export default router;
