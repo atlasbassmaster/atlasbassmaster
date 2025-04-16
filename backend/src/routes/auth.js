@@ -13,8 +13,9 @@ router.post('/login', async (req, res) => {
     const { toise_id, code } = req.body;
 
     if (!toise_id || !code) {
-        return res.status(400).json({ 
-            error: 'Toise et code requis' 
+        return res.status(400).json({
+            success: false,
+            message: 'Toise et code requis'
         });
     }
 
@@ -24,15 +25,17 @@ router.post('/login', async (req, res) => {
         let toise = await Toise.findOne({ where: { id:toise_id, code} });
         if (!toise) {
             return res.status(401).json({
-                error: 'Identifiants incorrects'
+            success: false,
+                message: 'Identifiants incorrects'
             });
         }
 
         let user = await User.findOne({ where: {toise_id} });
 
         if (!user) {
-            return res.status(401).json({ 
-                error: 'Compte introuvable'
+            return res.status(401).json({
+            success: false,
+                message: 'Compte introuvable'
             });
         }
 
@@ -42,8 +45,9 @@ router.post('/login', async (req, res) => {
 
     } catch (error) {
         console.error('Erreur:', error);
-        res.status(500).json({ 
-            error: 'Erreur serveur' 
+        res.status(500).json({
+        success: false,
+            message: 'Erreur serveur'
         });
     }
 });

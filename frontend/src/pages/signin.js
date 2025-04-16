@@ -17,8 +17,8 @@ const Signin = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
 
-  const validateLetters = (value) => /^[A-Za-z]+$/.test(value);
-  const validateNumbers = (value) => /^[0-9]*$/.test(value);
+  const validateLetters = (value) => value.length == 0 || /^[A-Za-z]+$/.test(value);
+  const validateNumbers = (value) => value.length == 0 || /^[0-9]*$/.test(value);
 
   const validatetToise = (value) =>
     value.length === 0 || (/^[0-9]*$/.test(value) && value > 0 && value < 151);
@@ -76,9 +76,9 @@ const Signin = () => {
 
       if (response.data.success) {
       console.log(response.data);
-       // sessionStorage.setItem("staff__id", response.data.user.id);
+      sessionStorage.setItem("staff__id", response.data.staff.id);
        // console.log(sessionStorage.getItem("user__id"));
-        navigate("/catches");
+        navigate("/users");
       } else {
         setErrorMessage("Connexion échouée. Vérifiez vos informations.");
       }
@@ -113,6 +113,7 @@ const Signin = () => {
 
   const handleRequestError = (error) => {
     console.log(error);
+
     if (error.response) {
       setErrorMessage(error.response.data.message || "Erreur côté serveur.");
     } else if (error.request) {
@@ -180,21 +181,21 @@ const Signin = () => {
 <Tabs>
   <TabList>
     <Tab>Participant</Tab>
-    <Tab>Staff</Tab>
+    <Tab>Jury</Tab>
   </TabList>
 
   <TabPanel>
     {/* Participant Login Form */}
     <form onSubmit={handleParticipantLogin}>
       <input
-        type="text"
+        type="number"
         placeholder="Numéro de toise"
         value={toise}
         onChange={(e) => setToise(e.target.value)}
         required
       />
       <input
-        type="text"
+        type="number"
         placeholder="Code"
         value={code}
         onChange={(e) => setCode(e.target.value)}

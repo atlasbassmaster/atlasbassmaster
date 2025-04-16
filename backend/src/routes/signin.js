@@ -13,17 +13,20 @@ try {
 
   let toise = await Toise.findOne({ where: { id:toise_id } });
    if (!toise) {
-      // If user exists, return an error response
-      return res.status(400).json({ success: false, message: "Toise not found." });
+    console.log("Toise not found.");
+    // If user exists, return an error response
+    return res.status(400).json({ success: false, message: "Toise not found." });
    }
 
   else if (toise.code != code) {
+     console.log("Code invalide.");
      return res.status(400).json({ success: false, message: "Code invalide." });
   }
 
   let user = await User.findOne({ where: {toise_id } });
 
    if (user) {
+       console.log("Toise already taken.");
       // If user exists, return an error response
       return res.status(400).json({ success: false, message: "Toise already taken." });
     }
@@ -31,14 +34,16 @@ try {
   user = await User.findOne({ where: { phone_number } });
 
   if (user) {
+    console.log("Phone already exists.");
     // If user exists, return an error response
     return res.status(400).json({ success: false, message: "Phone already exists." });
   }
 
-
   if (!user) {
     user = await User.create({first_name, last_name, phone_number, toise_id, code});
   }
+
+  console.log("User created", user);
 
   res.json({ success: true, user });
 

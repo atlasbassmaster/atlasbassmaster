@@ -10,46 +10,49 @@ const UserSearchPage = () => {
   });
   const [results, setResults] = useState([]);
 
-    const validateNumbers = (value) => /^[0-9]*$/.test(value);
-    const validateLength = (value) => {
-      console.log("Length validation", value % 0.5);
-      return (value % 0.5 === 0);
-    };
+  const validateNumbers = (value) => /^[0-9]*$/.test(value);
+  const validateLength = (value) => {
+    // Check if the value is a multiple of 0.5
+    return value % 0.5 === 0;
+  };
 
-  
   // State for selected user and editing
   const [selectedUser, setSelectedUser] = useState(null);
   const [editUser, setEditUser] = useState({});
   const [message, setMessage] = useState("");
-  
-  // State to track new catch lengths (by catch id)
+
+  // State to track new catch lengths (by catch id) for editing catches
   const [catchUpdates, setCatchUpdates] = useState({});
-  
+
+  // State for adding a new catch
+  const [newCatchLength, setNewCatchLength] = useState("");
+
   // State for user rankings (for vertical div on right)
   const [rankings, setRankings] = useState([]);
   const [topUser, setTopUser] = useState(null);
   const [rankLoading, setRankLoading] = useState(true);
-  const [rankError, setRankError] = useState('');
-  // Fetch rankings on component mount
+  const [rankError, setRankError] = useState("");
 
-  useEffect(() => {
-    const fetchRankings = async () => {
-      try {
-        const response = await axios.get('/rankings');
-        if (response.data.success) {
-          setRankings(response.data.rankings);
-          setTopUser(response.data.topUser);
-        } else {
-          setError('Failed to fetch rankings.');
-        }
-      } catch (err) {
-        console.error('Error fetching rankings:', err);
-        setRankError('An error occurred while fetching rankings.');
-      } finally {
-        setRankLoading(false);
+  // Fetch rankings
+  const fetchRankings = async () => {
+    try {
+      const response = await axios.get("/rankings");
+      if (response.data.success) {
+        setRankings(response.data.rankings);
+        setTopUser(response.data.topUser);
+      } else {
+        setRankError("Failed to fetch rankings.");
       }
-    };
+    } catch (err) {
+      console.error("Error fetching rankings:", err);
+      setRankError("An error occurred while fetching rankings.");
+    } finally {
+      setRankLoading(false);
+    }
+  };
 
+  // Fetch rankings on mount
+  useEffect(() => {
     fetchRankings();
   }, []);
 
@@ -97,16 +100,15 @@ const UserSearchPage = () => {
     }
   };
 
-  // Update user information via PUT request and then reload the page.
+  // Update user information via PUT and refresh data
   const handleUserUpdate = async (e) => {
     e.preventDefault();
     try {
       const res = await axios.put(`/users/${selectedUser.id}`, editUser);
       if (res.data.success) {
         setMessage("User updated successfully.");
-        // Reload the page to show the updated info
-        handleSearch();
-        //window.location.reload();
+        await handleSearch();
+        await fetchRankings();
       }
     } catch (error) {
       console.error("Error updating user:", error);
@@ -114,30 +116,35 @@ const UserSearchPage = () => {
     }
   };
 
-  // Update a catch's length via PUT request and then reload the page.
+  // Update a catch's length via PUT and refresh data
   const handleCatchUpdate = async (catchId, newLength) => {
     try {
       const res = await axios.put(`/catches/${catchId}`, { length: newLength });
       if (res.data.success) {
         setMessage("Catch updated.");
-        handleSelectUser(selectedUser.id);
-      //  window.location.reload();
+        await handleSelectUser(selectedUser.id);
+        await fetchRankings();
+      }
+      else {
+      setMessage(res.data.message);
       }
     } catch (error) {
+
       console.error("Error updating catch:", error);
-      setMessage("Error updating catch.");
+      setMessage(error.response.data.message);
     }
   };
 
-  // Delete a catch via DELETE request and then reload the page.
+  // Delete a catch via DELETE and refresh data
   const handleCatchDelete = async (catchId) => {
     try {
-      const res = await axios.delete(`/catches/${catchId}`,
-      { data: { userId: selectedUser.id, catchId },});
+      const res = await axios.delete(`/catches/${catchId}`, {
+        data: { userId: selectedUser.id, catchId },
+      });
       if (res.data.success) {
         setMessage("Catch deleted successfully.");
-        console.log("oojj");
-        handleSelectUser(selectedUser.id);
+        await handleSelectUser(selectedUser.id);
+        await fetchRankings();
       }
     } catch (error) {
       console.error("Error deleting catch:", error);
@@ -145,9 +152,34 @@ const UserSearchPage = () => {
     }
   };
 
+  // Add a new catch for the selected user and refresh data
+  const handleAddCatch = async (e) => {
+    e.preventDefault();
+    const lengthVal = parseFloat(newCatchLength);
+    if (!validateLength(lengthVal)) {
+      setMessage("Catch length must be a multiple of 0.5.");
+      return;
+    }
+    try {
+      const res = await axios.post("/catches", {
+        length: lengthVal,
+        user_id: selectedUser.id,
+      });
+      if (res.data.success) {
+        setMessage("Catch added successfully.");
+        setNewCatchLength("");
+        await handleSelectUser(selectedUser.id);
+        await fetchRankings();
+      }
+    } catch (error) {
+      console.error("Error adding catch:", error);
+      setMessage("Error adding catch.");
+    }
+  };
+
   return (
     <div style={styles.pageContainer}>
-      {/* Main content on the left */}
+      {/* Main content */}
       <div style={styles.mainSection}>
         <h1>User Search</h1>
         <div style={styles.searchFields}>
@@ -178,7 +210,7 @@ const UserSearchPage = () => {
         </div>
 
         <h2>Results</h2>
-        {message && <p>{message}</p>}
+        {message && <p style={styles.errorMessage}>{message}</p>}
         <ul style={styles.resultList}>
           {results.map((user) => (
             <li
@@ -227,6 +259,23 @@ const UserSearchPage = () => {
               </button>
             </form>
 
+            {/* New Catch Form */}
+            <h2>Add a New Catch</h2>
+            <form onSubmit={handleAddCatch}>
+              <input
+                type="number"
+                placeholder="Catch length (cm)"
+                value={newCatchLength}
+                onChange={(e) => setNewCatchLength(e.target.value)}
+                step="0.5"
+                style={styles.input}
+                required
+              />
+              <button type="submit" style={styles.button}>
+                Add Catch
+              </button>
+            </form>
+
             <h2>User Catches</h2>
             {selectedUser.Catches && selectedUser.Catches.length > 0 ? (
               <ul style={styles.catchList}>
@@ -261,7 +310,9 @@ const UserSearchPage = () => {
                         onClick={() =>
                           handleCatchUpdate(
                             c.id,
-                            catchUpdates[c.id] !== undefined ? catchUpdates[c.id] : c.length
+                            catchUpdates[c.id] !== undefined
+                              ? catchUpdates[c.id]
+                              : c.length
                           )
                         }
                         style={styles.button}
@@ -281,99 +332,106 @@ const UserSearchPage = () => {
             ) : (
               <p>No catches available.</p>
             )}
-            {message && <p>{message}</p>}
+            {message && <p style={styles.errorMessage}>{message}</p>}
           </div>
         )}
       </div>
 
-      {/* Ranking section on the right */}
-       <div style={styles.rankingSection}>
-          <div style={styles.container}>
-            {/* Top User Section */}
-            {topUser && (
-              <div style={styles.topUserSection}>
-                <h2>🏆 Biggest Catch</h2>
-                 {rankLoading && <p>Loading rankings...</p>}
-                         {rankError && <p>Loading rankings...</p>}
-                <p>
-                  <strong>{topUser.first_name} {topUser.last_name}</strong> caught a fish measuring <strong>{topUser.length} cm</strong> on{' '}
-                  {new Date(topUser.created_at).toLocaleDateString()}.
-                </p>
-              </div>
-            )}
-
-            {/* Rankings List */}
-              {rankings.length > 0 ? (
-            <div style={styles.rankingsSection}>
-              <h2>🎯 Top 5 Users</h2>
-              <ol>
-                {rankings.slice(0, 5).map((user, index) => (
-                  <li key={user.user_id} style={styles.rankingItem}>
-                    <span>{index + 1}. {user.first_name} {user.last_name}</span>
-                    <span>{user.points} pts</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-            ) : (
-                      <p>No rankings available.</p>
-                    )}
+      {/* Ranking section */}
+      <div style={styles.rankingSection}>
+        <h2>User Rankings</h2>
+        {rankLoading && <p>Loading rankings...</p>}
+        {rankError && <p>{rankError}</p>}
+        {topUser && (
+          <div style={styles.topUserSection}>
+            <h2>🏆 Biggest Catch</h2>
+            <p>
+              <strong>
+                {topUser.first_name} {topUser.last_name}
+              </strong>{" "}
+              caught a fish measuring <strong>{topUser.length} cm</strong> on{" "}
+              {new Date(topUser.created_at).toLocaleDateString()}.
+            </p>
           </div>
-
+        )}
+        {rankings.length > 0 ? (
+          <div style={styles.rankingsSection}>
+            <h2>🎯 Top 5 Users</h2>
+            <ol>
+              {rankings.slice(0, 5).map((user, index) => (
+                <li key={user.user_id} style={styles.rankingItem}>
+                  <span>
+                    {index + 1}. {user.first_name} {user.last_name}
+                  </span>
+                  <span>{user.points} pts</span>
+                </li>
+              ))}
+            </ol>
           </div>
-
-
+        ) : (
+          <p>No rankings available.</p>
+        )}
+      </div>
     </div>
   );
 };
 
 const styles = {
+  // Mobile-friendly layout: stack sections vertically.
   pageContainer: {
     display: "flex",
-    padding: "20px",
+    flexDirection: "column",
+    padding: "10px",
     fontFamily: "Arial, sans-serif",
   },
   mainSection: {
-    flex: 3,
-    marginRight: "20px",
+    flex: 1,
+    width: "100%",
+    marginBottom: "20px",
   },
   rankingSection: {
-    flex: 1,
-    paddingLeft: "20px",
-    borderLeft: "1px solid #ccc",
+    width: "100%",
+    padding: "10px",
+    borderTop: "1px solid #ccc",
+    marginTop: "20px",
   },
   searchFields: {
     display: "flex",
+    flexDirection: "column",
     gap: "10px",
     marginBottom: "20px",
   },
   input: {
     padding: "8px",
     fontSize: "16px",
+    width: "100%",
+    boxSizing: "border-box",
   },
   button: {
-    padding: "8px 16px",
+    padding: "10px 16px",
     background: "#007BFF",
     color: "white",
     border: "none",
     borderRadius: "4px",
     cursor: "pointer",
+    fontSize: "16px",
   },
   resultList: {
     listStyle: "none",
     padding: 0,
   },
   resultItem: {
-    padding: "8px",
+    padding: "10px",
     borderBottom: "1px solid #ccc",
     cursor: "pointer",
     textAlign: "left",
   },
   userDetails: {
     marginTop: "20px",
-    padding: "20px",
+    padding: "15px",
     border: "1px solid #ccc",
     borderRadius: "8px",
+    backgroundColor: "#fff",
   },
   catchList: {
     listStyle: "none",
@@ -392,22 +450,37 @@ const styles = {
   },
   catchActions: {
     display: "flex",
+    flexDirection: "column",
     gap: "8px",
-    alignItems: "center",
+    alignItems: "flex-start",
   },
   catchInput: {
-    width: "80px",
+    width: "100%",
     padding: "4px",
-  },
-  rankingList: {
-    listStyle: "none",
-    padding: 0,
+    fontSize: "16px",
+    marginBottom: "5px",
   },
   rankingItem: {
     textAlign: "left",
-    padding: "8px 0",
+    padding: "10px 0",
     borderBottom: "1px solid #ccc",
   },
+  topUserSection: {
+    marginBottom: "20px",
+    padding: "10px",
+    border: "1px solid #ccc",
+    borderRadius: "8px",
+    backgroundColor: "#f9f9f9",
+  },
+  rankingsSection: {
+    padding: "10px",
+    border: "1px solid #ccc",
+    borderRadius: "8px",
+    backgroundColor: "#f1f1f1",
+  },
+  errorMessage: {
+  color: "red"
+  }
 };
 
 export default UserSearchPage;

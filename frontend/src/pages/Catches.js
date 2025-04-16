@@ -5,12 +5,10 @@ const Catches = () => {
   const [catches, setCatches] = useState([]);
   const [fishLength, setFishLength] = useState("30");
   const [rankings, setRankings] = useState({
-        rank : 0,
-        points : 0,
-        total_users : 0
-
+    rank: 0,
+    points: 0,
+    total_users: 0,
   });
-
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   // States for editing a catch:
@@ -19,18 +17,29 @@ const Catches = () => {
 
   const user_id = sessionStorage.getItem("user__id");
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect screen width changes for responsiveness.
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize(); // Check on initial render
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const validateNumbers = (value) => /^[0-9]*$/.test(value);
   const validateLength = (value) => {
     console.log("Length validation", value % 0.5);
-    return (value % 0.5 === 0);
+    return value % 0.5 === 0;
   };
 
   const handleInputChange = (e) => {
     console.log("Input change validation");
     const value = e.target.value;
-    // Regex for a decimal number (optional leading minus, one dot, any digits before and after)
     const regex = /^-?\d*(\.\d*)?$/;
-    if (regex.test(value) && (value % 0.5 === 0)) {
+    if (regex.test(value) && (parseFloat(value) % 0.5 === 0)) {
       setFishLength(value);
     }
   };
@@ -41,10 +50,9 @@ const Catches = () => {
     try {
       const response = await axios.get("/catches/rankings/" + user_id);
       console.log(response.data.rankings);
-      if(response.data.rankings) {
+      if (response.data.rankings) {
         setRankings(response.data.rankings);
       }
-
     } catch (error) {
       console.error("Erreur fetching rankings:", error);
     } finally {
@@ -54,9 +62,10 @@ const Catches = () => {
 
   // Fetch user's catches on mount
   useEffect(() => {
-    axios.get("/catches/user/" + user_id)
-      .then(response => setCatches(response.data))
-      .catch(error => console.error("Erreur :", error));
+    axios
+      .get("/catches/user/" + user_id)
+      .then((response) => setCatches(response.data))
+      .catch((error) => console.error("Erreur :", error));
   }, [user_id]);
 
   // Fetch ranking data on mount
@@ -70,16 +79,16 @@ const Catches = () => {
       alert("❌ Longueur minimale : 30 cm");
       return;
     }
-
-    axios.post("/catches", { length: lengthValue, user_id })
-      .then(response => {
+    axios
+      .post("/catches", { length: lengthValue, user_id })
+      .then((response) => {
         setCatches(response.data.catches);
         setErrorMessage("");
         setFishLength("30");
         // After adding a catch, update the ranking.
         fetchRanking();
       })
-      .catch(error => console.error("Erreur :", error));
+      .catch((error) => console.error("Erreur :", error));
   };
 
   // Prepare to edit a catch: load its current length into state.
@@ -95,8 +104,9 @@ const Catches = () => {
       setErrorMessage("❌ Longueur minimale : 30 cm");
       return;
     }
-    axios.put(`/catches/${catchId}`, { length: newLength, toise_id: catchId })
-      .then(response => {
+    axios
+      .put(`/catches/${catchId}`, { length: newLength, toise_id: catchId })
+      .then((response) => {
         const updatedCatch = response.data.catch;
         setCatches(catches.map(item => item.id === catchId ? updatedCatch : item));
         setEditCatchId(null);
@@ -105,7 +115,7 @@ const Catches = () => {
         // After editing a catch, update the ranking.
         fetchRanking();
       })
-      .catch(error => console.error("Error updating catch:", error));
+      .catch((error) => console.error("Error updating catch:", error));
   };
 
   const deleteCatch = async (catchId) => {
@@ -123,8 +133,8 @@ const Catches = () => {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.leftColumn}>
+    <div style={{ ...styles.container, flexDirection: isMobile ? "column" : "row" }}>
+      <div style={{ ...styles.leftColumn, marginBottom: isMobile ? "20px" : "0" }}>
         <h2>Enregistrement des Prises</h2>
         <input
           type="text"
@@ -136,14 +146,31 @@ const Catches = () => {
           value={fishLength}
           onChange={handleInputChange}
         />
+        <div>
+                <input
+                  type="range"
+                  min="30"
+                  max="70"
+                  step="0.5"
+                  placeholder="Longueur (cm)"
+                  style={styles.input}
+                  value={fishLength}
+                  onChange={handleInputChange}
+                /></div>
+                <div>{fishLength} cm</div>
+                <div>  </div>
         <button
           onClick={handleAddCatch}
-          disabled={parseFloat(fishLength) < 30}
-          style={{
-            ...styles.button,
-            background: parseFloat(fishLength) < 30 ? "#AAAAAA" : styles.editButton.background,
-            cursor: parseFloat(fishLength) < 30 ? "not-allowed" : styles.editButton.cursor,
-          }}
+          disabled={parseFloat(fishLength) < 30 || parseFloat(fishLength) / 0.5 === 0}
+                style={{
+                  ...styles.button,
+                  background: (parseFloat(fishLength) < 30 || parseFloat(fishLength) / 0.5 === 0)
+                    ? "#AAAAAA"
+                    : styles.editButton.background,
+                  cursor: (parseFloat(fishLength) < 30 || parseFloat(fishLength) / 0.5 === 0)
+                    ? "not-allowed"
+                    : styles.editButton.cursor,
+                }}
         >
           Ajouter
         </button>
@@ -154,8 +181,12 @@ const Catches = () => {
             <p>Loading ranking...</p>
           ) : (
             <>
-              <h2>Classement : {rankings.rank} / {rankings.total_users}</h2>
-              <p><strong>Points:</strong> {rankings.points}</p>
+              <h2>
+                Classement : {rankings.rank} / {rankings.total_users}
+              </h2>
+              <p>
+                <strong>Points:</strong> {rankings.points}
+              </p>
             </>
           )}
         </div>
@@ -168,15 +199,22 @@ const Catches = () => {
             <div key={catchItem.id} style={styles.catchRow}>
               {editCatchId === catchItem.id ? (
                 <>
-                  <input
-                    type="number"
+
+                  <select
                     value={editLength}
-                    onChange={(e) => setEditLength(e.target.value)}
-                    style={{ ...styles.input, width: "100px" }}
-                    min="30"
-                    step="0.5"
-                    required
-                  />
+                                     onChange={(e) => setEditLength(e.target.value)}
+                                        style={{ ...styles.input, width: "100px",  height: "(0px"}}
+                  >
+                    {Array.from({ length: ((70 - 30) / 0.5) + 1 }, (_, i) => {
+                      const value = (30 + i * 0.5).toFixed(1); // keeps the value as a string with one decimal place
+                      return (
+                        <option key={value} value={value}>
+                          {value} cm
+                        </option>
+                      );
+                    })}
+                  </select>
+
                   <button onClick={() => handleEditSubmit(catchItem.id)} style={styles.editButton}>
                     Save
                   </button>
@@ -187,8 +225,12 @@ const Catches = () => {
               ) : (
                 <>
                   <div style={styles.catchInfo}>
-                    <p><strong>Longueur:</strong> {catchItem.length} cm</p>
-                    <p><strong>Date:</strong> {catchItem.created_at}</p>
+                    <p>
+                      <strong>Longueur:</strong> {catchItem.length} cm
+                    </p>
+                    <p>
+                      <strong>Date:</strong> {catchItem.created_at}
+                    </p>
                   </div>
                   <div>
                     <button onClick={() => handleEdit(catchItem)} style={styles.editButton}>
@@ -234,6 +276,7 @@ const styles = {
     padding: "10px",
     width: "80%",
     marginBottom: "10px",
+    boxSizing: "border-box",
   },
   button: {
     padding: "10px",
@@ -260,6 +303,7 @@ const styles = {
     padding: "15px",
     borderRadius: "8px",
     boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+    flexWrap: "wrap", // Allows elements to wrap on smaller screens
   },
   catchInfo: {
     flex: 1,

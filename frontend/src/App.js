@@ -9,6 +9,7 @@ import UserSearchPage from "./pages/UserSearchPage";
 import Admin from "./pages/Admin";
 import Results from "./pages/Results";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedStaffRoute from "./components/ProtectedStaffRoute";
 //      <Navbar /> {/* Affichage du menu de navigation */}
 
 function App() {
@@ -23,7 +24,7 @@ function App() {
         <Route path="/ranking" element={<Ranking />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/results" element={<Results />} />
-        <Route path="/users" element={<UserSearchPage />} />
+        <Route path="/users" element={<ProtectedStaffRoute><UserSearchPage /></ProtectedStaffRoute>}  />
       </Routes>
     </Router>
   );

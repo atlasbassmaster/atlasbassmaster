@@ -53,7 +53,7 @@ router.delete("/:id", async (req, res) => {
       return res.status(404).json({ error: "Catch not found or unauthorized." });
     }
 
-    res.status(200).json({ status: true, message: "Catch deleted successfully." });
+    res.status(200).json({ success: true, message: "Catch deleted successfully." });
   } catch (error) {
     console.error("Error deleting catch:", error);
     res.status(500).json({ error: "Internal server error." });
@@ -76,10 +76,6 @@ router.get("/user/:user_id", async (req, res) => {
   try {
     const { user_id } = req.params;
     const userCatches = await Catch.findAll({ where: { user_id }, order: [['created_at', 'DESC']]  });
-    if (!userCatches.length) {
-      return res.status(404).json({ error: "No catches found for this user" });
-    }
-
     res.json(userCatches);
   } catch (error) {
     console.error("Error retrieving user catches:", error);
@@ -94,7 +90,8 @@ router.put("/:id", async (req, res) => {
   // Validate the length value
   if (!length || isNaN(length) || parseFloat(length) < 30) {
     return res.status(400).json({
-      message: "Invalid length. The length must be a number greater than or equal to 30."
+     success : false,
+      message: "Longeur minimale est 30cm"
     });
   }
 

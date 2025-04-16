@@ -25,18 +25,18 @@ services:
       - backend
     
 
-  db:
-    image: postgres:15
-    restart: always
-    environment:
-      POSTGRES_DB: atlasbassmaster
-      POSTGRES_USER: atlasbassmaster
-      POSTGRES_PASSWORD: atlasbassmaster
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init-db:/docker-entrypoint-initdb.d
+#  db:
+#    image: postgres:15
+#    restart: always
+#    environment:
+#      POSTGRES_DB: atlasbassmaster
+#      POSTGRES_USER: atlasbassmaster
+#      POSTGRES_PASSWORD: atlasbassmaster
+#    ports:
+#      - "5432:5432"
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data
+#      - ./init-db:/docker-entrypoint-initdb.d
 
 volumes:
   postgres_data:
