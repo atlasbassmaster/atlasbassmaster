@@ -46,7 +46,7 @@ router.get("/", async (req, res) => {
       FROM catch c
       JOIN "users" u ON u.id = c.user_id
       ORDER BY c.length DESC
-      LIMIT 1;
+      LIMIT 3;
     `;
 
     const [biggestCatchResults] = await sequelize.query(biggestCatchQuery);
@@ -54,7 +54,7 @@ router.get("/", async (req, res) => {
     res.json({
       success: true,
       rankings: rankingResults,
-      topUser: biggestCatchResults.length > 0 ? biggestCatchResults[0] : null
+      topUser: biggestCatchResults.length > 0 ? biggestCatchResults : null
     });
   } catch (error) {
     console.error("Error retrieving rankings:", error);

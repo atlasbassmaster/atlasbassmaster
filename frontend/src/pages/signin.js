@@ -150,11 +150,12 @@ const Signin = () => {
               style={styles.input}
             />
             <input
-              type="text"
+              type="number"
               placeholder="Téléphone"
               value={phone}
               onChange={(e) =>
-                (validatePhoneNumber(e.target.value) || e.target.value === "") && setPhone(e.target.value)
+//                (validatePhoneNumber(e.target.value) || e.target.value === "") &&
+                setPhone(e.target.value)
               }
               required
               style={styles.input}

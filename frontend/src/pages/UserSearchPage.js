@@ -254,6 +254,7 @@ const UserSearchPage = () => {
             onChange={handleSearchChange}
             style={styles.input}
           />
+
           <button onClick={handleSearch} style={styles.button}>
             Search
           </button>

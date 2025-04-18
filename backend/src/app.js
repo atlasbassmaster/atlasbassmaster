@@ -8,6 +8,7 @@ import catchesRoutes from "./routes/catches.js";
 import rankingRoutes from "./routes/ranking.js";
 import adminRoutes from "./routes/admin.js";
 import usersRouter from "./routes/users.js";
+import stateRoutes from "./routes/state.js";
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use("/catches", catchesRoutes);
 app.use("/rankings", rankingRoutes);
 app.use("/admin", adminRoutes);
 app.use("/users", usersRouter);
+app.use("/api/state", stateRoutes);
 
 const startServer = async () => {
   try {

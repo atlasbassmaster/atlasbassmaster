@@ -72,7 +72,8 @@ router.post('/staff', async (req, res) => {
 
         if (!staff) {
             return res.status(401).json({
-                error: 'Compte introuvable'
+                success: false,
+                message: 'Compte introuvable'
             });
         }
 

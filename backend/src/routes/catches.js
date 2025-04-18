@@ -5,6 +5,7 @@ import getUserRankings from "../models/getUserRankings.js";
 
 const router = express.Router();
 
+
 router.get("/rankings/:user_id", async (req, res) => {
     const { user_id } = req.params;
   try {

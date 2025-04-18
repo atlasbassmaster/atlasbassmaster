@@ -37,3 +37,7 @@
 --);
 --
 --insert into staff values (1, 'alaaCH', 'alaa_1446');
+
+--CREATE TABLE IF NOT EXISTS state (
+--  enabled BOOLEAN NOT NULL DEFAULT TRUE
+--);
