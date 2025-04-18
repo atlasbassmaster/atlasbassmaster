@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "../services/api";
 
 const Catches = () => {
+ const [isFeatureEnabled, setIsFeatureEnabled] = useState(false);
   const [catches, setCatches] = useState([]);
   const [fishLength, setFishLength] = useState("30");
   const [rankings, setRankings] = useState({
@@ -18,6 +19,21 @@ const Catches = () => {
   const user_id = sessionStorage.getItem("user__id");
 
   const [isMobile, setIsMobile] = useState(false);
+
+ // check is la saisie est activee
+   useEffect(() => {
+      const fetchFeatureState = async () => {
+        try {
+          const response = await axios.get('/api/state');
+          setIsFeatureEnabled(response.data.enabled);
+        } catch (error) {
+          console.error('Error fetching feature state:', error);
+          setIsFeatureEnabled(false); // Default to disabled on error
+        }
+      };
+
+      fetchFeatureState();
+    }, []);
 
   // Detect screen width changes for responsiveness.
   useEffect(() => {
@@ -39,7 +55,7 @@ const Catches = () => {
     console.log("Input change validation");
     const value = e.target.value;
     const regex = /^-?\d*(\.\d*)?$/;
-    if (regex.test(value) && (parseFloat(value) % 0.5 === 0)) {
+    if ((value.length == 0) || (regex.test(value) && (parseFloat(value) % 0.5 === 0))) {
       setFishLength(value);
     }
   };
@@ -161,16 +177,16 @@ const Catches = () => {
                 <div>  </div>
         <button
           onClick={handleAddCatch}
-          disabled={parseFloat(fishLength) < 30 || parseFloat(fishLength) / 0.5 === 0}
-                style={{
-                  ...styles.button,
-                  background: (parseFloat(fishLength) < 30 || parseFloat(fishLength) / 0.5 === 0)
-                    ? "#AAAAAA"
-                    : styles.editButton.background,
-                  cursor: (parseFloat(fishLength) < 30 || parseFloat(fishLength) / 0.5 === 0)
-                    ? "not-allowed"
-                    : styles.editButton.cursor,
-                }}
+          disabled={!isFeatureEnabled || parseFloat(fishLength) < 30 || parseFloat(fishLength) % 0.5 !== 0}
+          style={{
+            ...styles.button,
+            background: (!isFeatureEnabled || parseFloat(fishLength) < 30 || parseFloat(fishLength) % 0.5 !== 0)
+              ? '#AAAAAA'
+              : styles.editButton.background,
+            cursor: (!isFeatureEnabled || parseFloat(fishLength) < 30 || parseFloat(fishLength) % 0.5 !== 0)
+              ? 'not-allowed'
+              : styles.editButton.cursor,
+          }}
         >
           Ajouter
         </button>
@@ -229,16 +245,26 @@ const Catches = () => {
                       <strong>Longueur:</strong> {catchItem.length} cm
                     </p>
                     <p>
-                      <strong>Date:</strong> {catchItem.created_at}
+                      <strong>Date:</strong> {new Intl.DateTimeFormat('en-GB', {
+                                                                  hour: '2-digit',
+                                                                  minute: '2-digit',
+                                                                  day: '2-digit',
+                                                                  month: '2-digit',
+                                                                  year: 'numeric',
+                                                                }).format(new Date(catchItem.created_at)) }
                     </p>
                   </div>
                   <div>
-                    <button onClick={() => handleEdit(catchItem)} style={styles.editButton}>
-                      Edit
-                    </button>
-                    <button onClick={() => deleteCatch(catchItem.id)} style={styles.deleteButton}>
-                      Delete
-                    </button>
+{isFeatureEnabled && (
+  <>
+    <button onClick={() => handleEdit(catchItem)} style={styles.editButton}>
+      Edit
+    </button>
+    <button onClick={() => deleteCatch(catchItem.id)} style={styles.deleteButton}>
+      Delete
+    </button>
+  </>
+)}
                   </div>
                 </>
               )}

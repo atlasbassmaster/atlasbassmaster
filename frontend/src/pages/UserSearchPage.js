@@ -2,6 +2,36 @@ import React, { useState, useEffect } from "react";
 import axios from "../services/api";
 
 const UserSearchPage = () => {
+
+ const [featureEnabled, setFeatureEnabled] = useState(false);
+  const [featureLoading, setFeatureLoading] = useState(true);
+
+  // Fetch feature toggle on mount
+  useEffect(() => {
+    const fetchFeature = async () => {
+      try {
+        const res = await axios.get("/api/state");
+        setFeatureEnabled(res.data.enabled);
+      } catch (err) {
+        console.error("Error fetching feature state:", err);
+      } finally {
+        setFeatureLoading(false);
+      }
+    };
+    fetchFeature();
+  }, []);
+
+  // Toggle the feature on the server
+  const toggleFeature = async () => {
+    try {
+      const res = await axios.put("/api/state/toggle");
+      setFeatureEnabled(res.data.enabled);
+    } catch (err) {
+      console.error("Error toggling feature:", err);
+    }
+  };
+
+
   // States for search
   const [searchParams, setSearchParams] = useState({
     first_name: "",
@@ -135,6 +165,8 @@ const UserSearchPage = () => {
     }
   };
 
+
+
   // Delete a catch via DELETE and refresh data
   const handleCatchDelete = async (catchId) => {
     try {
@@ -179,6 +211,24 @@ const UserSearchPage = () => {
 
   return (
     <div style={styles.pageContainer}>
+
+          <div style={styles.featureToggle}>
+            <button
+              onClick={toggleFeature}
+              disabled={featureLoading}
+              style={{
+                ...styles.button,
+                background: featureEnabled ? "#dc3545" : "#28a745",
+              }}
+            >
+              { featureLoading
+                  ? "Loading…"
+                  : featureEnabled
+                    ? "Désactiver les saisies"
+                    : "Activer les saisies" }
+            </button>
+          </div>
+
       {/* Main content */}
       <div style={styles.mainSection}>
         <h1>User Search</h1>
@@ -343,30 +393,82 @@ const UserSearchPage = () => {
         {rankLoading && <p>Loading rankings...</p>}
         {rankError && <p>{rankError}</p>}
         {topUser && (
-          <div style={styles.topUserSection}>
-            <h2>🏆 Biggest Catch</h2>
-            <p>
-              <strong>
-                {topUser.first_name} {topUser.last_name}
-              </strong>{" "}
-              caught a fish measuring <strong>{topUser.length} cm</strong> on{" "}
-              {new Date(topUser.created_at).toLocaleDateString()}.
-            </p>
+          <div style={styles.tableWrapper}>
+            <table style={styles.catchTable}>
+              <thead>
+                <tr>
+                  <th style={styles.headerCell}>Rank</th>
+                  <th style={styles.headerCell}>Name</th>
+                  <th style={styles.headerCell}>Length (cm)</th>
+                  <th style={styles.headerCell}>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topUser.slice(0, 3).map((user, index) => {
+                  // Format date as "HH:mm dd/MM/yyyy"
+                  const formattedDate = new Intl.DateTimeFormat('en-GB', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                  }).format(new Date(user.created_at));            // locale‑aware formatting :contentReference[oaicite:9]{index=9}
+
+                  const isOdd = index % 2 === 1;
+                  return (
+                    <tr
+                      key={user.user_id}
+                      style={isOdd ? { ...styles.row, ...styles.rowOdd } : styles.row} // alternating rows
+                    >
+                      <td style={styles.cell}>{index + 1}</td>
+                      <td style={styles.cell}>
+                        {user.first_name} {user.last_name}
+                      </td>
+                      <td style={styles.cell}>{user.length}</td>
+                      <td style={styles.cell}>{formattedDate}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
+
         )}
         {rankings.length > 0 ? (
           <div style={styles.rankingsSection}>
             <h2>🎯 Top 5 Users</h2>
-            <ol>
-              {rankings.slice(0, 5).map((user, index) => (
-                <li key={user.user_id} style={styles.rankingItem}>
-                  <span>
-                    {index + 1}. {user.first_name} {user.last_name}
-                  </span>
-                  <span>{user.points} pts</span>
-                </li>
-              ))}
-            </ol>
+            <div style={styles.tableWrapper}>
+              <table style={styles.catchTable}>
+                <thead>
+                  <tr>
+                    <th style={styles.headerCell}>Rank</th>
+                    <th style={styles.headerCell}>Name</th>
+                    <th style={styles.headerCell}>Length (cm)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rankings.slice(0, 5).map((user, index) => {
+
+
+                    const isOdd = index % 2 === 1;
+                    return (
+                      <tr
+                        key={user.user_id}
+                        style={isOdd ? { ...styles.row, ...styles.rowOdd } : styles.row}
+                      >
+                        <td style={styles.cell}>{index + 1}</td>
+                        <td style={styles.cell}>
+                          {user.first_name} {user.last_name}
+                        </td>
+                        <td style={styles.cell}>{user.points} pts</td>
+
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
           </div>
         ) : (
           <p>No rankings available.</p>
@@ -480,7 +582,35 @@ const styles = {
   },
   errorMessage: {
   color: "red"
-  }
+  },
+   tableWrapper: {
+      overflowX: 'auto',                   // horizontal scroll on small screens :contentReference[oaicite:5]{index=5}
+      margin: '1rem 0',
+    },
+    catchTable: {
+      width: '100%',
+      borderCollapse: 'collapse',          // hide borders :contentReference[oaicite:6]{index=6}
+      background: 'linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%)', // lake‑blue gradient :contentReference[oaicite:7]{index=7}
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      fontFamily: "'Segoe UI', sans-serif",
+      textAlign: 'center',                 // center text in all cells
+    },
+    headerCell: {
+      backgroundColor: 'grey',          // wood‑brown accent :contentReference[oaicite:8]{index=8}
+      color: '#ffffff',
+      padding: '0.75rem',
+      fontSize: '1rem',
+    },
+    row: {
+      borderBottom: '1px solid rgba(255,255,255,0.3)',
+    },
+    rowOdd: {
+      backgroundColor: 'rgba(255,255,255,0.3)', // subtle shading for odd rows
+    },
+    cell: {
+      padding: '0.75rem',
+      color: '#004d40',                    // dark teal text for contrast
+    },
 };
 
 export default UserSearchPage;
