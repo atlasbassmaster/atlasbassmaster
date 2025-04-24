@@ -18,7 +18,10 @@ const User = sequelize.define('User', {
         allowNull: false,
         unique: true,
         validate: {
-            is: /^\+?[0-9]{10,15}$/
+          is: {
+            args: [/^(?:\+?[1-9]\d{1,14}|\d{9,14})$/],
+            msg: 'Phone number incorrect'
+          }
         },
     },
 
