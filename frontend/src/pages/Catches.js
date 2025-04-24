@@ -199,7 +199,7 @@ const Catches = () => {
           ) : (
             <>
               <h2>
-                Classement : {rankings.rank} / {rankings.total_users}
+                  <span style={{ color: "red" }}>Classement : {rankings.rank} / {rankings.total_users}</span>
               </h2>
               <p>
                 <strong>Points:</strong> {rankings.points}
