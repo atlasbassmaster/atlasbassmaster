@@ -51,7 +51,9 @@ const UserSearchPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [editUser, setEditUser] = useState({});
   const [message, setMessage] = useState("");
+  const [catchMessage, setCatchMessage] = useState("");
   const [UpdateMessage, setUpdateMessage] = useState("");
+  const [updateMessageSucess, setUpdateMessageSucess] = useState("");
 
   // State to track new catch lengths (by catch id) for editing catches
   const [catchUpdates, setCatchUpdates] = useState({});
@@ -137,9 +139,11 @@ const UserSearchPage = () => {
   const handleUserUpdate = async (e) => {
     e.preventDefault();
     try {
+      setUpdateMessage("");
+      setUpdateMessageSucess("");
       const res = await axios.put(`/users/${selectedUser.id}`, editUser);
       if (res.data.success) {
-        setMessage("User updated successfully.");
+        setUpdateMessageSucess("User updated successfully.");
         await handleSearch();
         await fetchRankings();
       }
@@ -162,17 +166,17 @@ const UserSearchPage = () => {
     try {
       const res = await axios.put(`/catches/${catchId}`, { length: newLength });
       if (res.data.success) {
-        setMessage("Catch updated.");
+        setCatchMessage("Catch updated.");
         await handleSelectUser(selectedUser.id);
         await fetchRankings();
       }
       else {
-      setMessage(res.data.message);
+        setCatchMessage(res.data.message);
       }
     } catch (error) {
 
       console.error("Error updating catch:", error);
-      setMessage(error.response.data.message);
+      setCatchMessage(error.response.data.message);
     }
   };
 
@@ -185,13 +189,13 @@ const UserSearchPage = () => {
         data: { userId: selectedUser.id, catchId },
       });
       if (res.data.success) {
-        setMessage("Catch deleted successfully.");
+        setCatchMessage("Catch deleted successfully.");
         await handleSelectUser(selectedUser.id);
         await fetchRankings();
       }
     } catch (error) {
       console.error("Error deleting catch:", error);
-      setMessage("Error deleting catch.");
+      setCatchMessage("Error deleting catch.");
     }
   };
 
@@ -200,7 +204,7 @@ const UserSearchPage = () => {
     e.preventDefault();
     const lengthVal = parseFloat(newCatchLength);
     if (!validateLength(lengthVal)) {
-      setMessage("Catch length must be a multiple of 0.5.");
+      setCatchMessage("Catch length must be a multiple of 0.5.");
       return;
     }
     try {
@@ -209,14 +213,20 @@ const UserSearchPage = () => {
         user_id: selectedUser.id,
       });
       if (res.data.success) {
-        setMessage("Catch added successfully.");
+        setCatchMessage("Catch added successfully.");
         setNewCatchLength("");
         await handleSelectUser(selectedUser.id);
         await fetchRankings();
       }
     } catch (error) {
       console.error("Error adding catch:", error);
-      setMessage("Error adding catch.");
+      if( error.response.data.error) {
+        setCatchMessage( error.response.data.error);
+      }
+      else {
+        setCatchMessage("Error adding catch.");
+      }
+
     }
   };
 
@@ -282,17 +292,33 @@ const UserSearchPage = () => {
 
         <h2>Results</h2>
         {message && <p style={styles.errorMessage}>{message}</p>}
-        <ul style={styles.resultList}>
-          {results.map((user) => (
-            <li
-              key={user.id}
-              onClick={() => handleSelectUser(user.id)}
-              style={styles.resultItem}
-            >
-              {user.first_name} {user.last_name} - {user.phone_number} - {user.toise_id}
-            </li>
-          ))}
-        </ul>
+        {/* Scrollable table container */}
+        <div style={styles.tableContainer} tabIndex="0">
+          <table style={styles.resultTable}>
+            <thead>
+            <tr>
+              <th style={styles.userHeaderCell}>Prénom</th>
+              <th style={styles.userHeaderCell}>Nom</th>
+              <th style={styles.userHeaderCell}>Téléphone</th>
+              <th style={styles.userHeaderCell}>Toise</th>
+            </tr>
+            </thead>
+            <tbody>
+            {results.map((user) => (
+                <tr
+                    key={user.id}
+                    onClick={() => handleSelectUser(user.id)}
+                    style={styles.resultRow}
+                >
+                  <td style={styles.userCell}>{user.first_name}</td>
+                  <td style={styles.userCell}>{user.last_name}</td>
+                  <td style={styles.userCell}>{user.phone_number}</td>
+                  <td style={styles.userCell}>{user.toise_id}</td>
+                </tr>
+            ))}
+            </tbody>
+          </table>
+        </div>
 
         {selectedUser && (
           <div style={styles.userDetails}>
@@ -338,7 +364,8 @@ const UserSearchPage = () => {
                 Update User
               </button>
             </form>
-            {UpdateMessage && <p style={styles.errorMessage}>{UpdateMessage}</p>}
+            {UpdateMessage && <p >{UpdateMessage}</p>}
+            {updateMessageSucess && <p style={styles.successMessage} >{updateMessageSucess}</p>}
 
             {/* New Catch Form */}
             <h2>Add a New Catch</h2>
@@ -356,7 +383,7 @@ const UserSearchPage = () => {
                 Add Catch
               </button>
             </form>
-            {message && <p style={styles.errorMessage}>{message}</p>}
+            {catchMessage && <p style={styles.errorMessage}>{catchMessage}</p>}
 
             <h2>User Catches</h2>
             {selectedUser.Catches && selectedUser.Catches.length > 0 ? (
@@ -553,15 +580,29 @@ const styles = {
     cursor: "pointer",
     fontSize: "16px",
   },
+
   resultList: {
+    display: "grid",
+    gridGap: "10px",
+    /* auto-fit creates as many 200px-wide columns as will fit,
+       but never wider than 1fr of container */
+    gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))",
     listStyle: "none",
     padding: 0,
+    margin: 0,
+    /* ensure smooth horizontal scroll on very narrow screens */
+    overflowX: "auto",
   },
   resultItem: {
-    padding: "10px",
-    borderBottom: "1px solid #ccc",
+    backgroundColor: "#fff",   /* card-like look */
+    padding: "16px",            /* larger tap area */
+    borderRadius: "8px",        /* gentle rounding */
+    boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
     cursor: "pointer",
     textAlign: "left",
+    transition: "transform 0.1s",
+    /* subtle lift on hover/touch */
+    ":hover": { transform: "scale(1.02)" },
   },
   userDetails: {
     marginTop: "20px",
@@ -618,6 +659,9 @@ const styles = {
   errorMessage: {
   color: "red"
   },
+  successMessage: {
+    color: "green"
+  },
    tableWrapper: {
       overflowX: 'auto',                   // horizontal scroll on small screens :contentReference[oaicite:5]{index=5}
       margin: '1rem 0',
@@ -645,6 +689,44 @@ const styles = {
     cell: {
       padding: '0.75rem',
       color: '#004d40',                    // dark teal text for contrast
+    },
+
+    tableContainer: {
+      overflowX: "auto",                    // horizontal scroll :contentReference[oaicite:8]{index=8}
+      WebkitOverflowScrolling: "touch",     // smooth momentum on iOS :contentReference[oaicite:9]{index=9}
+      marginBottom: "20px",
+    },
+    // 2. Base table styling
+    resultTable: {
+      width: "100%",
+      minWidth: "600px",                    // ensures scroll if container narrower :contentReference[oaicite:10]{index=10}
+      borderCollapse: "collapse",
+    },
+
+  userHeaderCell: {
+    padding: "12px 8px",
+    textAlign: "center",                                    // center header text for clarity :contentReference[oaicite:0]{index=0}
+    fontSize: "1rem",
+    fontFamily: "'Segoe UI', sans-serif",
+    color: "#004d40",                                        // dark teal accent from fishing palettes :contentReference[oaicite:1]{index=1}
+    background: "linear-gradient(135deg, #3b9dff, #1bd6ff)", // water gradient evoking sky and sea :contentReference[oaicite:2]{index=2}
+    backgroundRepeat: "no-repeat",
+    backgroundPosition: "center right",                      // position the fish icon :contentReference[oaicite:3]{index=3}
+    backgroundImage: "url('/images/icons/fish.svg')",        // subtle fish silhouette
+    borderBottom: "2px solid #007BFF",                      // a bold blue separator
+  },
+    resultRow: {
+      cursor: "pointer",
+      transition: "background 0.2s",
+      borderBottom: "1px solid #ddd",
+    },
+    userCell: {
+      padding: "12px 8px",
+      fontSize: "0.9rem",
+      color: "#333",
+    },
+    resultRowHover: {
+      backgroundColor: "#f1f1f1",
     },
 };
 

@@ -10,8 +10,6 @@ router.get("/rankings/:user_id", async (req, res) => {
     const { user_id } = req.params;
   try {
     const rankings = await getUserRankings(user_id);
-    console.log("ookook");
-    console.log(rankings);
     res.json({ success: true, rankings });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server error fetching rankings" });
@@ -25,8 +23,8 @@ router.post("/", async (req, res) => {
   try {
     const { length, user_id } = req.body;
 
-    if (length < 30) {
-      return res.status(400).json({ error: "Longueur minimale 30 cm" });
+    if (!length || isNaN(length) || parseFloat(length) < 30 || parseFloat(length) > 70 ) {
+      return res.status(400).json({ error: "Longueur doit etre comprise entre 30 et 70 cm" });
     }
 
     const points = Math.floor(length * 10);
@@ -89,10 +87,10 @@ router.put("/:id", async (req, res) => {
   const { length, toise_id } = req.body;
 
   // Validate the length value
-  if (!length || isNaN(length) || parseFloat(length) < 30) {
+  if (!length || isNaN(length) || parseFloat(length) < 30 || parseFloat(length) > 70) {
     return res.status(400).json({
      success : false,
-      message: "Longeur minimale est 30cm"
+      message: "Longueur doit etre comprise entre 30 et 70 cm"
     });
   }
 
