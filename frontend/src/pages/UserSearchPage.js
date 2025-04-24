@@ -37,6 +37,7 @@ const UserSearchPage = () => {
     first_name: "",
     last_name: "",
     phone: "",
+    toise_id: "",
   });
   const [results, setResults] = useState([]);
 
@@ -50,6 +51,7 @@ const UserSearchPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [editUser, setEditUser] = useState({});
   const [message, setMessage] = useState("");
+  const [UpdateMessage, setUpdateMessage] = useState("");
 
   // State to track new catch lengths (by catch id) for editing catches
   const [catchUpdates, setCatchUpdates] = useState({});
@@ -121,6 +123,7 @@ const UserSearchPage = () => {
           first_name: res.data.user.first_name,
           last_name: res.data.user.last_name,
           phone_number: res.data.user.phone_number,
+          toise_id: res.data.user.toise_id,
         });
         setCatchUpdates({});
         setMessage("");
@@ -140,9 +143,17 @@ const UserSearchPage = () => {
         await handleSearch();
         await fetchRankings();
       }
+      else {
+        setUpdateMessage(res.data.UpdateError);
+      }
     } catch (error) {
       console.error("Error updating user:", error);
-      setMessage("Error updating user.");
+      if(error.response.data.UpdateError) {
+        setUpdateMessage(error.response.data.UpdateError);
+      }
+      else {
+        setUpdateMessage("Error updating user");
+      }
     }
   };
 
@@ -249,10 +260,19 @@ const UserSearchPage = () => {
           />
           <input
             name="phone"
+            type="number"
             placeholder="Téléphone"
             value={searchParams.phone}
             onChange={handleSearchChange}
             style={styles.input}
+          />
+          <input
+              name="toise_id"
+              type="number"
+              placeholder="Toise"
+              value={searchParams.toise_id}
+              onChange={handleSearchChange}
+              style={styles.input}
           />
 
           <button onClick={handleSearch} style={styles.button}>
@@ -269,7 +289,7 @@ const UserSearchPage = () => {
               onClick={() => handleSelectUser(user.id)}
               style={styles.resultItem}
             >
-              {user.first_name} {user.last_name} - {user.phone_number}
+              {user.first_name} {user.last_name} - {user.phone_number} - {user.toise_id}
             </li>
           ))}
         </ul>
@@ -305,10 +325,20 @@ const UserSearchPage = () => {
                 }
                 style={styles.input}
               />
+              <input
+                  name="toise_id"
+                  placeholder="Toise"
+                  value={editUser.toise_id}
+                  onChange={(e) =>
+                      setEditUser({ ...editUser, toise_id: e.target.value })
+                  }
+                  style={styles.input}
+              />
               <button type="submit" style={styles.button}>
                 Update User
               </button>
             </form>
+            {UpdateMessage && <p style={styles.errorMessage}>{UpdateMessage}</p>}
 
             {/* New Catch Form */}
             <h2>Add a New Catch</h2>
@@ -326,6 +356,7 @@ const UserSearchPage = () => {
                 Add Catch
               </button>
             </form>
+            {message && <p style={styles.errorMessage}>{message}</p>}
 
             <h2>User Catches</h2>
             {selectedUser.Catches && selectedUser.Catches.length > 0 ? (
@@ -383,7 +414,6 @@ const UserSearchPage = () => {
             ) : (
               <p>No catches available.</p>
             )}
-            {message && <p style={styles.errorMessage}>{message}</p>}
           </div>
         )}
       </div>
@@ -402,6 +432,7 @@ const UserSearchPage = () => {
                   <th style={styles.headerCell}>Name</th>
                   <th style={styles.headerCell}>Length (cm)</th>
                   <th style={styles.headerCell}>Date</th>
+                  <th style={styles.headerCell}>Toise</th>
                 </tr>
               </thead>
               <tbody>
@@ -427,6 +458,7 @@ const UserSearchPage = () => {
                       </td>
                       <td style={styles.cell}>{user.length}</td>
                       <td style={styles.cell}>{formattedDate}</td>
+                      <td style={styles.cell}>{user.toise_id}</td>
                     </tr>
                   );
                 })}
@@ -445,6 +477,7 @@ const UserSearchPage = () => {
                     <th style={styles.headerCell}>Rank</th>
                     <th style={styles.headerCell}>Name</th>
                     <th style={styles.headerCell}>Length (cm)</th>
+                    <th style={styles.headerCell}>Toise</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -462,6 +495,7 @@ const UserSearchPage = () => {
                           {user.first_name} {user.last_name}
                         </td>
                         <td style={styles.cell}>{user.points} pts</td>
+                        <td style={styles.cell}>{user.toise_id}</td>
 
                       </tr>
                     );

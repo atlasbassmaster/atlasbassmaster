@@ -129,7 +129,7 @@ const Signin = () => {
       <div style={styles.overlay}></div>
       <div style={styles.card}>
         <img src="/logo.png" alt="Logo" style={styles.logo} />
-        <h2 style={styles.title}>Bienvenue sur Atlas Bass Master 🎣</h2>
+        <h2 style={styles.title}>Atlas Bass Master 🎣</h2>
 
         {!isLoginMode ? (
           <form onSubmit={handleSignup} style={styles.form}>

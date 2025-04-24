@@ -27,7 +27,7 @@ const Login = () => {
       <div style={styles.overlay}></div> {/* Overlay pour améliorer la visibilité */}
       <div style={styles.card}>
         <img src="/logo.png" alt="Logo" style={styles.logo} />
-        <h2 style={styles.title}>Bienvenue sur Atlas Bass Master 🎣</h2>
+        <h2 style={styles.title}>Atlas Bass Master 🎣</h2>
         <form onSubmit={handleLogin} style={styles.form}>
           <input
             type="text"

@@ -91,7 +91,7 @@ const Catches = () => {
 
   const handleAddCatch = () => {
     const lengthValue = parseFloat(fishLength);
-    if (lengthValue < 30) {
+    if (lengthValue < 30 || lengthValue> 70) {
       alert("❌ Longueur minimale : 30 cm");
       return;
     }
@@ -116,7 +116,7 @@ const Catches = () => {
   // Submit the updated length via PUT request.
   const handleEditSubmit = (catchId) => {
     const newLength = parseFloat(editLength);
-    if (newLength < 30) {
+    if (newLength < 30 || newLength > 70) {
       setErrorMessage("❌ Longueur minimale : 30 cm");
       return;
     }
@@ -157,6 +157,7 @@ const Catches = () => {
           inputMode="decimal"
           placeholder="Longueur (cm)"
           min="30"
+          max="70"
           step="0.5"
           style={styles.input}
           value={fishLength}
@@ -177,13 +178,13 @@ const Catches = () => {
                 <div>  </div>
         <button
           onClick={handleAddCatch}
-          disabled={!isFeatureEnabled || parseFloat(fishLength) < 30 || parseFloat(fishLength) % 0.5 !== 0}
+          disabled={!isFeatureEnabled || parseFloat(fishLength) < 30 || parseFloat(fishLength) > 70 || parseFloat(fishLength) % 0.5 !== 0}
           style={{
             ...styles.button,
-            background: (!isFeatureEnabled || parseFloat(fishLength) < 30 || parseFloat(fishLength) % 0.5 !== 0)
+            background: (!isFeatureEnabled || parseFloat(fishLength) < 30 || parseFloat(fishLength) > 70 || parseFloat(fishLength) % 0.5 !== 0)
               ? '#AAAAAA'
               : styles.editButton.background,
-            cursor: (!isFeatureEnabled || parseFloat(fishLength) < 30 || parseFloat(fishLength) % 0.5 !== 0)
+            cursor: (!isFeatureEnabled || parseFloat(fishLength) < 30 || parseFloat(fishLength) > 70 || parseFloat(fishLength) % 0.5 !== 0)
               ? 'not-allowed'
               : styles.editButton.cursor,
           }}

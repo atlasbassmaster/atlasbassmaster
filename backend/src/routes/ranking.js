@@ -15,6 +15,7 @@ router.get("/", async (req, res) => {
         u.first_name,
         u.last_name,
         u.phone_number,
+        u.toise_id,
         ranking.points
       FROM (
         SELECT
@@ -42,7 +43,8 @@ router.get("/", async (req, res) => {
         c.*,
         u.first_name,
         u.last_name,
-        u.phone_number
+        u.phone_number,
+        u.toise_id
       FROM catch c
       JOIN "users" u ON u.id = c.user_id
       ORDER BY c.length DESC
