@@ -447,7 +447,7 @@ const UserSearchPage = () => {
 
       {/* Ranking section */}
       <div style={styles.rankingSection}>
-        <h2>User Rankings</h2>
+        <h2>Biggest Catches</h2>
         {rankLoading && <p>Loading rankings...</p>}
         {rankError && <p>{rankError}</p>}
         {topUser && (

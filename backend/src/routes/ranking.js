@@ -41,14 +41,25 @@ router.get("/", async (req, res) => {
     const biggestCatchQuery = `
       SELECT
         c.*,
+        c.user_id,
+        c.length,
         u.first_name,
         u.last_name,
         u.phone_number,
         u.toise_id
-      FROM catch c
-      JOIN "users" u ON u.id = c.user_id
-      ORDER BY c.length DESC
-      LIMIT 3;
+      FROM (
+             SELECT DISTINCT ON (c.user_id)
+               c.*
+             FROM catch c
+             ORDER BY
+               c.user_id,      -- 1) group by user_id
+               c.length DESC   -- 2) pick the longest catch per user
+           ) AS c
+             JOIN "users" u
+                  ON u.id = c.user_id
+      ORDER BY
+        c.length DESC    -- final sort: pick the top 3 by length
+        LIMIT 3;
     `;
 
     const [biggestCatchResults] = await sequelize.query(biggestCatchQuery);
