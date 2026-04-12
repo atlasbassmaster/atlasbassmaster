@@ -1,9 +1,8 @@
-
-import axios from 'axios';
+import axios from "axios";
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3001',
-  withCredentials: true // si vous utilisez des cookies
+  baseURL: process.env.REACT_APP_API_URL || "http://localhost:3001",
+  withCredentials: true, // si vous utilisez des cookies
 });
 
 //// Intercepteur pour gérer les erreurs

@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../services/api";
-import "../Styles/Catches.css";
-import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
-import 'react-tabs/style/react-tabs.css';
 
 const Signin = () => {
   const [isLoginMode, setIsLoginMode] = useState(false);
+  const [activeTab, setActiveTab] = useState("participant");
   const [firstName, setFirstName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -17,44 +15,27 @@ const Signin = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
 
-  const validateLetters = (value) => value.length == 0 || /^[A-Za-z]+$/.test(value);
-  const validateNumbers = (value) => value.length == 0 || /^[0-9]*$/.test(value);
-
-  const validatetToise = (value) =>
+  const validateLetters = (value) => value.length === 0 || /^[A-Za-zÀ-ÿ]+$/.test(value);
+  const validateToise = (value) =>
     value.length === 0 || (/^[0-9]*$/.test(value) && value > 0 && value < 151);
-
-  const validatePhoneNumber = (value) => {
-    const cleanedValue = value;
-    if (cleanedValue.length > 10) return false;
-    return (
-      cleanedValue.length <= 10 &&
-      ((cleanedValue.length === 1 && cleanedValue.startsWith("0")) ||
-        cleanedValue.startsWith("06") ||
-        cleanedValue.startsWith("07"))
-    );
-  };
+  const validatePhone = (value) =>
+    value.length === 0 || (/^0[0-9]*$/.test(value) && value.length <= 10);
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setErrorMessage("");
-
-
-
-
     try {
       const response = await axios.post("/signin", {
         first_name: firstName,
         last_name: lastName,
         phone_number: phone,
         toise_id: toise,
-        code: code,
+        code,
       });
-
       if (response.data.success) {
         sessionStorage.setItem("user__id", response.data.user.id);
         navigate("/catches");
       } else {
-       console.log("UUUU");
         setErrorMessage(response.data.message);
       }
     } catch (error) {
@@ -62,22 +43,13 @@ const Signin = () => {
     }
   };
 
-
-
   const handleStaffLogin = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
     setErrorMessage("");
-
     try {
-      const response = await axios.post("/auth/staff", {
-        username,
-        password,
-      });
-
+      const response = await axios.post("/auth/staff", { username, password });
       if (response.data.success) {
-      console.log(response.data);
-      sessionStorage.setItem("staff__id", response.data.staff.id);
-       // console.log(sessionStorage.getItem("user__id"));
+        sessionStorage.setItem("staff__id", response.data.staff.id);
         navigate("/users");
       } else {
         setErrorMessage("Connexion échouée. Vérifiez vos informations.");
@@ -90,20 +62,12 @@ const Signin = () => {
   const handleParticipantLogin = async (e) => {
     e.preventDefault();
     setErrorMessage("");
-
     try {
-      const response = await axios.post("/auth/login", {
-        toise_id:toise,
-        code,
-      });
-
+      const response = await axios.post("/auth/login", { toise_id: toise, code });
       if (response.data.success) {
         sessionStorage.setItem("user__id", response.data.user.id);
-        console.log("UUUU");
-        console.log(sessionStorage.getItem("user__id"));
         navigate("/catches");
       } else {
-      console.log("UUUU");
         setErrorMessage("Connexion échouée. Vérifiez vos informations.");
       }
     } catch (error) {
@@ -112,8 +76,6 @@ const Signin = () => {
   };
 
   const handleRequestError = (error) => {
-    console.log(error);
-
     if (error.response) {
       setErrorMessage(error.response.data.message || "Erreur côté serveur.");
     } else if (error.request) {
@@ -121,194 +83,216 @@ const Signin = () => {
     } else {
       setErrorMessage("Une erreur inconnue est survenue.");
     }
-    console.error("Erreur de requête :", error);
   };
 
   return (
     <div style={styles.container}>
-      <div style={styles.overlay}></div>
+      <div style={styles.overlay} />
       <div style={styles.card}>
         <img src="/logo.png" alt="Logo" style={styles.logo} />
         <h2 style={styles.title}>Atlas Bass Master 🎣</h2>
 
+        {/* Mode toggle */}
+        <div style={styles.modeToggle}>
+          <button
+            style={{ ...styles.modeBtn, ...(isLoginMode ? {} : styles.modeBtnActive) }}
+            onClick={() => { setIsLoginMode(false); setErrorMessage(""); }}
+          >
+            Inscription
+          </button>
+          <button
+            style={{ ...styles.modeBtn, ...(isLoginMode ? styles.modeBtnActive : {}) }}
+            onClick={() => { setIsLoginMode(true); setErrorMessage(""); }}
+          >
+            Connexion
+          </button>
+        </div>
+
         {!isLoginMode ? (
           <form onSubmit={handleSignup} style={styles.form}>
-            <input
-              type="text"
-              placeholder="Prénom"
-              value={firstName}
+            <input type="text" placeholder="Prénom" value={firstName}
               onChange={(e) => validateLetters(e.target.value) && setFirstName(e.target.value)}
-              required
-              style={styles.input}
-            />
-            <input
-              type="text"
-              placeholder="Nom"
-              value={lastName}
+              required style={styles.input} />
+            <input type="text" placeholder="Nom" value={lastName}
               onChange={(e) => validateLetters(e.target.value) && setLastName(e.target.value)}
-              required
-              style={styles.input}
-            />
-            <input
-              type="number"
-              placeholder="Téléphone"
-              value={phone}
-              onChange={(e) =>
-//                (validatePhoneNumber(e.target.value) || e.target.value === "") &&
-                setPhone(e.target.value)
-              }
-              required
-              style={styles.input}
-            />
-            <input
-              type="text"
-              placeholder="Numéro de toise"
-              value={toise}
-              onChange={(e) => validatetToise(e.target.value) && setToise(e.target.value)}
-              required
-              style={styles.input}
-            />
-            <input
-              type="text"
-              placeholder="Code"
-              value={code}
+              required style={styles.input} />
+            <input type="text" inputMode="numeric" placeholder="Téléphone (0XXXXXXXXX)" value={phone}
+              onChange={(e) => validatePhone(e.target.value) && setPhone(e.target.value)}
+              required style={styles.input} />
+            <input type="text" inputMode="numeric" placeholder="Numéro de toise" value={toise}
+              onChange={(e) => validateToise(e.target.value) && setToise(e.target.value)}
+              required style={styles.input} />
+            <input type="text" placeholder="Code" value={code}
               onChange={(e) => setCode(e.target.value)}
-              required
-              style={styles.input}
-            />
+              required style={styles.input} />
             <button type="submit" style={styles.button}>S'inscrire</button>
           </form>
         ) : (
-<Tabs>
-  <TabList>
-    <Tab>Participant</Tab>
-    <Tab>Jury</Tab>
-  </TabList>
+          <>
+            {/* Tab selector */}
+            <div style={styles.tabBar}>
+              <button
+                style={{ ...styles.tab, ...(activeTab === "participant" ? styles.tabActive : {}) }}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => { setActiveTab("participant"); setErrorMessage(""); }}
+              >
+                Participant
+              </button>
+              <button
+                style={{ ...styles.tab, ...(activeTab === "jury" ? styles.tabActive : {}) }}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => { setActiveTab("jury"); setErrorMessage(""); }}
+              >
+                Jury
+              </button>
+            </div>
 
-  <TabPanel>
-    {/* Participant Login Form */}
-    <form onSubmit={handleParticipantLogin}>
-      <input
-        type="number"
-        placeholder="Numéro de toise"
-        value={toise}
-        onChange={(e) => setToise(e.target.value)}
-        required
-      />
-      <input
-        type="number"
-        placeholder="Code"
-        value={code}
-        onChange={(e) => setCode(e.target.value)}
-        required
-      />
-      <button type="submit">Se connecter</button>
-    </form>
-  </TabPanel>
-
-  <TabPanel>
-    {/* Staff Login Form */}
-    <form onSubmit={handleStaffLogin}>
-      <input
-        type="text"
-        placeholder="Nom d'utilisateur"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        required
-      />
-      <input
-        type="password"
-        placeholder="Mot de passe"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-      />
-      <button type="submit">Se connecter</button>
-    </form>
-  </TabPanel>
-</Tabs>
-
+            {activeTab === "participant" ? (
+              <form onSubmit={handleParticipantLogin} style={styles.form}>
+                <input type="text" inputMode="numeric" placeholder="Numéro de toise" value={toise}
+                  onChange={(e) => setToise(e.target.value)} required style={styles.input} />
+                <input type="text" placeholder="Code" value={code}
+                  onChange={(e) => setCode(e.target.value)} required style={styles.input} />
+                <button type="submit" style={styles.button}>Se connecter</button>
+              </form>
+            ) : (
+              <form onSubmit={handleStaffLogin} style={styles.form}>
+                <input type="text" placeholder="Nom d'utilisateur" value={username}
+                  onChange={(e) => setUsername(e.target.value)} required style={styles.input} />
+                <input type="password" placeholder="Mot de passe" value={password}
+                  onChange={(e) => setPassword(e.target.value)} required style={styles.input}
+                  tabIndex="-1" onFocus={(e) => e.target.removeAttribute("tabindex")} />
+                <button type="submit" style={styles.button}>Se connecter</button>
+              </form>
+            )}
+          </>
         )}
-
-        <p
-          onClick={() => setIsLoginMode(!isLoginMode)}
-          style={{ marginTop: 16, color: "#007bff", cursor: "pointer", textDecoration: "underline" }}
-        >
-          {isLoginMode ? "Retour à l'inscription" : "J'ai déjà un compte"}
-        </p>
 
         {errorMessage && <p style={styles.error}>{errorMessage}</p>}
       </div>
     </div>
   );
 };
- 
 
 const styles = {
   container: {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    height: "100vh",
+    minHeight: "100vh",
     backgroundImage: "url('/background.jpg')",
     backgroundSize: "cover",
     backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
     position: "relative",
   },
   overlay: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    inset: 0,
+    backgroundColor: "rgba(0,0,0,0.55)",
   },
   card: {
     position: "relative",
     background: "#fff",
-    padding: "30px",
-    borderRadius: "10px",
-    boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
+    padding: "32px 28px",
+    borderRadius: "16px",
+    boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
     textAlign: "center",
-    width: "350px",
+    width: "340px",
     zIndex: 1,
   },
   logo: {
-    width: "80px",
-    marginBottom: "10px",
+    width: "72px",
+    marginBottom: "8px",
   },
   title: {
     marginBottom: "20px",
-    fontSize: "22px",
-    color: "#333",
+    fontSize: "20px",
+    fontWeight: "bold",
+    color: "#1a1a2e",
+    fontFamily: "'Segoe UI', sans-serif",
+  },
+  modeToggle: {
+    display: "flex",
+    background: "#f0f4f8",
+    borderRadius: "8px",
+    padding: "4px",
+    marginBottom: "20px",
+    gap: "4px",
+  },
+  modeBtn: {
+    flex: 1,
+    padding: "8px",
+    border: "none",
+    borderRadius: "6px",
+    background: "transparent",
+    color: "#666",
+    cursor: "pointer",
+    fontSize: "14px",
+    fontWeight: "500",
+    transition: "all 0.2s",
+  },
+  modeBtnActive: {
+    background: "#fff",
+    color: "#1a1a2e",
+    boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
+    fontWeight: "bold",
+  },
+  tabBar: {
+    display: "flex",
+    borderBottom: "2px solid #f0f4f8",
+    marginBottom: "16px",
+    gap: "0",
+  },
+  tab: {
+    flex: 1,
+    padding: "8px",
+    border: "none",
+    background: "transparent",
+    color: "#999",
+    cursor: "pointer",
+    fontSize: "14px",
+    borderBottom: "2px solid transparent",
+    marginBottom: "-2px",
+    transition: "all 0.2s",
+  },
+  tabActive: {
+    color: "#1a1a2e",
+    fontWeight: "bold",
+    borderBottom: "2px solid #1a1a2e",
   },
   form: {
     display: "flex",
     flexDirection: "column",
+    gap: "10px",
   },
   input: {
-    padding: "12px",
-    margin: "10px 0",
-    border: "1px solid #ccc",
-    borderRadius: "5px",
-    fontSize: "16px",
+    padding: "11px 14px",
+    border: "1px solid #e0e0e0",
+    borderRadius: "8px",
+    fontSize: "15px",
+    outline: "none",
+    transition: "border 0.2s",
+    fontFamily: "'Segoe UI', sans-serif",
   },
   button: {
-    background: "#007BFF",
+    background: "#1a1a2e",
     color: "white",
     padding: "12px",
     border: "none",
-    borderRadius: "5px",
+    borderRadius: "8px",
     cursor: "pointer",
-    fontSize: "16px",
-    marginTop: "10px",
-    transition: "background 0.3s",
+    fontSize: "15px",
+    fontWeight: "bold",
+    marginTop: "4px",
+    transition: "opacity 0.2s",
   },
   error: {
-    color: "red",
-    marginTop: "10px",
-    fontSize: "14px",
+    color: "#e53935",
+    marginTop: "12px",
+    fontSize: "13px",
+    background: "#ffebee",
+    padding: "8px 12px",
+    borderRadius: "6px",
   },
 };
 
