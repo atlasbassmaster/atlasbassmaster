@@ -23,6 +23,22 @@ const UserSearchPage = () => {
   const [topCatches, setTopCatches] = useState([]);
   const [rankLoading, setRankLoading] = useState(true);
   const [activePanel, setActivePanel] = useState("search"); // "search" | "ranking" | "catches"
+  const [expandedRows, setExpandedRows] = useState({}); // { user_id: catches[] | "loading" }
+
+  const toggleRowExpand = async (userId) => {
+    if (expandedRows[userId]) {
+      setExpandedRows((p) => { const n = { ...p }; delete n[userId]; return n; });
+      return;
+    }
+    setExpandedRows((p) => ({ ...p, [userId]: "loading" }));
+    try {
+      const res = await axios.get(`/catches/user/${userId}`);
+      const sorted = [...res.data].sort((a, b) => b.length - a.length);
+      setExpandedRows((p) => ({ ...p, [userId]: sorted }));
+    } catch {
+      setExpandedRows((p) => { const n = { ...p }; delete n[userId]; return n; });
+    }
+  };
 
   useEffect(() => {
     const fetchFeature = async () => {
@@ -335,22 +351,64 @@ const UserSearchPage = () => {
                 <table style={s.table}>
                   <thead>
                     <tr>
-                      {["#", "Prénom", "Nom", "Toise", "Points"].map((h) => (
+                      {["#", "Prénom", "Nom", "Toise", "Points", ""].map((h) => (
                         <th key={h} style={s.th}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {rankings.map((user, i) => (
-                      <tr key={user.user_id} style={{ ...s.tr, background: i % 2 === 0 ? "#fff" : "#f9f9f9" }}>
-                        <td style={{ ...s.td, fontWeight: "bold", color: i < 3 ? "#f0c040" : "#333" }}>
-                          {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
-                        </td>
-                        <td style={s.td}>{user.first_name}</td>
-                        <td style={s.td}>{user.last_name}</td>
-                        <td style={s.td}>{user.toise_id}</td>
-                        <td style={{ ...s.td, fontWeight: "bold" }}>{user.points}</td>
-                      </tr>
+                      <React.Fragment key={user.user_id}>
+                        <tr style={{ ...s.tr, background: i % 2 === 0 ? "#fff" : "#f9f9f9" }}>
+                          <td style={{ ...s.td, fontWeight: "bold", color: i < 3 ? "#f0c040" : "#333" }}>
+                            {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
+                          </td>
+                          <td style={s.td}>{user.first_name}</td>
+                          <td style={s.td}>{user.last_name}</td>
+                          <td style={s.td}>{user.toise_id}</td>
+                          <td style={{ ...s.td, fontWeight: "bold" }}>{user.points}</td>
+                          <td style={s.td}>
+                            <button onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => toggleRowExpand(user.user_id)} style={s.expandBtn}>
+                              {expandedRows[user.user_id] ? "▲" : "▼"}
+                            </button>
+                          </td>
+                        </tr>
+                        {expandedRows[user.user_id] && (
+                          <tr style={{ background: "#f0f4f8" }}>
+                            <td colSpan={6} style={{ padding: "0 16px 12px 40px" }}>
+                              {expandedRows[user.user_id] === "loading" ? (
+                                <p style={{ color: "#888", fontSize: "13px" }}>Chargement…</p>
+                              ) : (
+                                <table style={s.subTable}>
+                                  <thead>
+                                    <tr>
+                                      <th style={s.subTh}>#</th>
+                                      <th style={s.subTh}>Longueur</th>
+                                      <th style={s.subTh}>Points</th>
+                                      <th style={s.subTh}>Date</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {expandedRows[user.user_id].map((c, ci) => (
+                                      <tr key={c.id} style={{ background: ci < 5 ? "#e8f5e9" : "#fff" }}>
+                                        <td style={s.subTd}>{ci + 1}</td>
+                                        <td style={{ ...s.subTd, fontWeight: "bold" }}>{c.length} cm</td>
+                                        <td style={{ ...s.subTd, color: ci < 5 ? "#388e3c" : "#aaa" }}>
+                                          {ci < 5 ? `${(c.length * 10).toFixed(0)} pts` : "—"}
+                                        </td>
+                                        <td style={s.subTd}>
+                                          {new Date(c.created_at).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              )}
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
@@ -368,26 +426,68 @@ const UserSearchPage = () => {
                 <table style={s.table}>
                   <thead>
                     <tr>
-                      {["#", "Prénom", "Nom", "Longueur", "Toise", "Date"].map((h) => (
+                      {["#", "Prénom", "Nom", "Longueur", "Toise", "Date", ""].map((h) => (
                         <th key={h} style={s.th}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {topCatches.map((user, i) => (
-                      <tr key={`${user.user_id}-${i}`} style={{ ...s.tr, background: i % 2 === 0 ? "#fff" : "#f9f9f9" }}>
-                        <td style={{ ...s.td, fontWeight: "bold" }}>
-                          {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
-                        </td>
-                        <td style={s.td}>{user.first_name}</td>
-                        <td style={s.td}>{user.last_name}</td>
-                        <td style={{ ...s.td, fontWeight: "bold" }}>{user.length} cm</td>
-                        <td style={s.td}>{user.toise_id}</td>
-                        <td style={s.td}>
-                          {new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
-                            .format(new Date(user.created_at))}
-                        </td>
-                      </tr>
+                      <React.Fragment key={`${user.user_id}-${i}`}>
+                        <tr style={{ ...s.tr, background: i % 2 === 0 ? "#fff" : "#f9f9f9" }}>
+                          <td style={{ ...s.td, fontWeight: "bold" }}>
+                            {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
+                          </td>
+                          <td style={s.td}>{user.first_name}</td>
+                          <td style={s.td}>{user.last_name}</td>
+                          <td style={{ ...s.td, fontWeight: "bold" }}>{user.length} cm</td>
+                          <td style={s.td}>{user.toise_id}</td>
+                          <td style={s.td}>
+                            {new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+                              .format(new Date(user.created_at))}
+                          </td>
+                          <td style={s.td}>
+                            <button onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => toggleRowExpand(user.user_id)} style={s.expandBtn}>
+                              {expandedRows[user.user_id] ? "▲" : "▼"}
+                            </button>
+                          </td>
+                        </tr>
+                        {expandedRows[user.user_id] && (
+                          <tr style={{ background: "#f0f4f8" }}>
+                            <td colSpan={7} style={{ padding: "0 16px 12px 40px" }}>
+                              {expandedRows[user.user_id] === "loading" ? (
+                                <p style={{ color: "#888", fontSize: "13px" }}>Chargement…</p>
+                              ) : (
+                                <table style={s.subTable}>
+                                  <thead>
+                                    <tr>
+                                      <th style={s.subTh}>#</th>
+                                      <th style={s.subTh}>Longueur</th>
+                                      <th style={s.subTh}>Points</th>
+                                      <th style={s.subTh}>Date</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {expandedRows[user.user_id].map((c, ci) => (
+                                      <tr key={c.id} style={{ background: ci < 5 ? "#e8f5e9" : "#fff" }}>
+                                        <td style={s.subTd}>{ci + 1}</td>
+                                        <td style={{ ...s.subTd, fontWeight: "bold" }}>{c.length} cm</td>
+                                        <td style={{ ...s.subTd, color: ci < 5 ? "#388e3c" : "#aaa" }}>
+                                          {ci < 5 ? `${(c.length * 10).toFixed(0)} pts` : "—"}
+                                        </td>
+                                        <td style={s.subTd}>
+                                          {new Date(c.created_at).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              )}
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
@@ -511,6 +611,18 @@ const s = {
   },
   error: { color: "#e53935", fontSize: "13px", marginTop: "4px" },
   success: { color: "#388e3c", fontSize: "13px", marginTop: "4px" },
+  expandBtn: {
+    background: "transparent", border: "none", cursor: "pointer",
+    fontSize: "12px", color: "#888", padding: "4px 6px",
+  },
+  subTable: {
+    width: "100%", borderCollapse: "collapse", fontSize: "13px", marginTop: "6px",
+  },
+  subTh: {
+    background: "#e0e0e0", color: "#555", padding: "6px 8px",
+    textAlign: "left", fontWeight: "bold",
+  },
+  subTd: { padding: "6px 8px", color: "#333" },
 };
 
 export default UserSearchPage;
